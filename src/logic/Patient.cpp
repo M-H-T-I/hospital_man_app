@@ -1,65 +1,101 @@
 #include "Patient.hpp"
 #include "errors/InsufficientFundsException.hpp"
 
-//CONSTRUCTORS
-
-Patient::Patient(){
-
-    // default values for rest of the attributes from my Person constructor
-    // name = 0;
-    // password = 0
-    // id = -1
-    
-    balance = 0;
-
+// CONSTRUCTORS AND DESTRUCTOR:
+Patient::Patient() : Person(), age(0), balance(0.0)
+{
+    gender = 'M';
 }
 
-Patient::Patient(int id, char* name, char* pswd, int balance, int age, char gender, char contact[]): Person(id, name, pswd, contact){
-
-    this->balance = balance;
-    // add appointments laterrr
-    this->age = age;
+Patient::Patient(int id, const char *name, int age, char gender, const char *contact, const char *password, double balance)
+    : Person(id, name, contact, password), age(age), balance(balance)
+{
     this->gender = gender;
-
 }
 
+Patient::~Patient() {}
+
+// GETTER
+
+int Patient::getAge() const
+{
+    return age;
+}
+
+char Patient::getGender() const
+{
+    return gender;
+}
+
+double Patient::getBalance() const
+{
+    return balance;
+}
+
+// setter
+void Patient::setAge(int newAge)
+{
+    age = newAge;
+}
+
+void Patient::setGender(char newGender)
+{
+    gender = newGender;
+}
+
+void Patient::setBalance(double newBalance)
+{
+    balance = newBalance;
+}
 
 // OPERATOR OVERLOADS
-
-
-void Patient::operator+=(int val){
-
-    balance += val;
-
+Patient &Patient::operator+=(double amount)
+{
+    balance += amount;
+    return *this;
 }
 
-bool Patient::operator==(Patient& other){
-
-    if(other.id == this->id){
-        return true;
-    }
-
-    return false;
+bool Patient::operator==(const Patient &other) const
+{
+    return id == other.id;
 }
 
-void Patient::operator-=(int val){ // catch in upoper scope where it is called
-    
-    if( (this->balance - val) < 0){
+Patient &Patient::operator-=(double amount)
+{ // catch in upoper scope where it is called
+
+    if ((this->balance - amount) < 0)
+    {
 
         char msg[] = "Insufficient funds";
         throw InsufficientFundsException(msg);
-        
-    }else {
-        balance-= val;
     }
-
+    else
+    {
+        balance -= amount;
+    }
 }
 
+// FRIEND FUNCTIONs
+// Format:  ID | Name | Age | Gender | Contact | Balance
+std::ostream &operator<<(ostream &out, Patient &p)
+{
+    out << "ID: " << p.id
+        << " | Name: " << p.name
+        << " | Age: " << p.age
+        << " | Gender: " << p.gender
+        << " | Contact: " << p.contact
+        << " | Balance: PKR " << p.balance;
 
-// FRIEND FUNCTIOSN
+    return out;
+}
 
-ostream& operator<<(ostream& out, Patient& obj){
+// virtual functions:
+void Patient::displayInfo()
+{
+    cout << *this << "\n";
+}
 
-    out << "ID: " << obj.id << " | " ;
-
+const char *Patient::getRole()
+{
+    return "Patient";
 }

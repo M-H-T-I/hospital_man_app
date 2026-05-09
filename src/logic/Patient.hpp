@@ -1,31 +1,41 @@
 #pragma once
 #include "Person.hpp"
 
-class Patient: protected Person{
+class Patient : protected Person
+{
 
+private:
+    int age;
+    char gender; // 'M' or 'F'
+    double balance;
 
-    private:
-     
-        int balance;
-        int age; 
-        char gender; // M/m or F/f
+    // Appointment* appointments; will implement later
 
-        // Appointment* appointments; will implement later
+public:
+    // CONSTTRUCTORS AND DESTRUCTOR
+    Patient();
+    Patient(int id, const char *name, int age, char gender, const char *contact, const char *password, double balance);
+    virtual ~Patient();
 
-    public: 
+    // GETTERS
+    int getAge() const;
+    char getGender() const;
+    double getBalance() const;
 
-        // CONSTTRUCTORS
+    // setters
+    void setAge(int age);
+    void setGender(char gender);
+    void setBalance(double balance);
 
-        Patient();
-        Patient(int id, char* name, char* pswd, int balance, int age, char gender, char contact[]); // add appointments to this when I have created that class
+    // OPERATOR  OVERLOADS
+    bool operator==(const Patient &other) const;
+    Patient &operator-=(double amount);
+    Patient &operator+=(double amount);
 
+    // FRIEND FUNCTIONS
+    friend ostream &operator<<(ostream &out, Patient &obj);
 
-        //OPERATOR  OVERLOADS
-
-        bool operator==(Patient& other);
-        void operator-=(int val);
-        void operator+=(int val);
-
-        // FRIEND FUNCTIONS
-        friend ostream& operator<<(ostream& out, Patient& obj);
+    // virtual overloads:
+    void displayInfo()  override;
+    const char *getRole() override;
 };

@@ -32,5 +32,5 @@ public:
 
     // virtiual functiuons
     virtual void displayInfo();
-    virtual char *getRole();
+    virtual const char *getRole();
 };
