@@ -1,41 +1,31 @@
 #pragma once
-#include "Person.hpp"
 
-class Patient : public Person
+class Person
 {
-
-private:
-    int age;
-    char gender; // 'M' or 'F'
-    double balance;
-
-    // Appointment* appointments; will implement later
+protected:
+    int id;
+    char name[51];
+    char password[51];
+    char contact[12];
 
 public:
-    // CONSTTRUCTORS AND DESTRUCTOR
-    Patient();
-    Patient(int id, const char *name, int age, char gender, const char *contact, const char *password, double balance);
-    virtual ~Patient();
+    Person();
+    Person(int id, const char *name, const char *password, const char *contact);
+    virtual ~Person() {}
 
-    // GETTERS
-    int getAge() const;
-    char getGender() const;
-    double getBalance() const;
+    // getter
+    int getID() const { return id; }
+    const char *getName() const { return name; }
+    const char *getPassword() const { return password; }
+    const char *getContact() const { return contact; }
 
-    // setters
-    void setAge(int age);
-    void setGender(char gender);
-    void setBalance(double balance);
+    // setter
+    void setID(int newID) { id = newID; }
+    void setName(const char *n);
+    void setPassword(const char *p);
+    void setContact(const char *c);
 
-    // OPERATOR  OVERLOADS
-    bool operator==(const Patient &other) const;
-    Patient &operator-=(double amount);
-    Patient &operator+=(double amount);
-
-    // FRIEND FUNCTIONS
-    friend ostream &operator<<(ostream &out, Patient &obj);
-
-    // virtual overloads:
-    void displayInfo()  override;
-    const char *getRole() override;
+    // virtual function
+    virtual void displayMenu() = 0;    
+    virtual void displayProfile() = 0; 
 };

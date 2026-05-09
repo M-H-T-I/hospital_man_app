@@ -3,34 +3,30 @@
 
 class Person
 {
-
 protected:
     int id;
-    char name[51];     //    max 50 charac
-    char contact[12];  // 11 digits contact
-    char password[51]; // minimum 6 charcter password
+    char name[51];
+    char password[51];
+    char contact[12];
 
 public:
-    // CONSTRUCTOIRS
     Person();
-    Person(int id, const char *name, const char *contact, const char *password);
+    Person(int id, const char *name, const char *password, const char *contact);
     virtual ~Person();
 
-    // GETTER
-    int getId() const;
-    const char *getName() const;
-    const char *getContact() const;
-    const char *getPassword() const;
+    // getter
+    int getID() const { return id; }
+    const char *getName() const { return name; }
+    const char *getPassword() const { return password; }
+    const char *getContact() const { return contact; }
 
     // SETTER
-    void setId(int id);
-    void setName(const char* name);
-    void setContact(const char* contact);
-    void setPassword(const char* password);
- 
+    void setID(int newID) { id = newID; }
+    void setName(const char *n);
+    void setPassword(const char *p);
+    void setContact(const char *c);
 
-
-    // virtiual functiuons
-    virtual void displayInfo();
-    virtual const char *getRole();
+    // VIRTUAL FNCTION
+    virtual void displayMenu() = 0;   
+    virtual void displayProfile() = 0; 
 };
