@@ -1,38 +1,69 @@
 #include "Person.hpp"
 #include "myUtils.hpp"
 
+// VCONSTRUCTOR
 
-Person::Person(){
-
-    
-    id = -1; // my placeholder for null 
-    password = name = 0;
-    
+Person::Person()
+    : id(0)
+{
+    name[0] = '\0';
     contact[0] = '\0';
-
-
-
-    // name = 0
-    // password = 0
-    // contact = "\0..."
+    password[0] = '\0';
 }
 
-Person::Person(int id, const char* name, const char* pswd, char contact[11]){
+Person::Person(int id, const char *name, const char *contact, const char *password)
+    : id(id)
+{
+    textCopy(this->name, name, 51);
+    textCopy(this->contact, contact, 12);
+    textCopy(this->password, password, 51);
+}
 
-    this->id = id;
-    this-> name = name;
-    this->password = pswd;
+Person::~Person() {}
 
-    
 
-    for (int i = 0; i < 11; i++){
 
-        this->contact[i] = contact[i];
+// GETTER
+int Person::getId() const
+{
+    return id;
+}
 
-    }
+const char *Person::getName() const
+{
+    return name;
+}
+
+const char *Person::getContact() const
+{
+    return contact;
+}
+
+const char *Person::getPassword() const
+{
+    return password;
 }
 
 
+// SETTERS
+void Person::setContact(const char* newCont)
+{
+    textCopy(contact, newCont, 12);
+}
+ 
+void Person::setPassword(const char* newPswd)
+{
+    textCopy(password, newPswd, 51);
+}
 
-
+void Person::setId(int newId)
+{
+    id = newId;
+}
+ 
+void Person::setName(const char* newName)
+{
+    textCopy(name, newName, 51);
+}
+ 
 
