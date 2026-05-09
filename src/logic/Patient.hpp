@@ -1,7 +1,7 @@
 #pragma once
 #include "Person.hpp"
 
-class Patient : protected Person
+class Patient : public Person
 {
 
 private:
