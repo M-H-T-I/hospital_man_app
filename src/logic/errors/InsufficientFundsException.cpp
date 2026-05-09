@@ -1,10 +1,4 @@
 #include "InsufficientFundsException.hpp"
 
-
-
-InsufficientFundsException::InsufficientFundsException(const char* msg): HospitalException(msg){}
-
-
-char* InsufficientFundsException::what(){
-    return message;
-}
+InsufficientFundsException::InsufficientFundsException() : HospitalException("Insufficient funds. Please top up your balance.") {}
+InsufficientFundsException::InsufficientFundsException(const char *msg) : HospitalException(msg) {}

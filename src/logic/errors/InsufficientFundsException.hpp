@@ -1,9 +1,11 @@
+#pragma once
 #include "HospitalException.hpp"
 
-class InsufficientFundsException : public HospitalException {
 
-    public:
-        InsufficientFundsException(const char* msg);
-        char* what();
+class InsufficientFundsException : public HospitalException
+{
+public:
+    InsufficientFundsException();
 
+    InsufficientFundsException(const char *msg) : HospitalException(msg) {}
 };

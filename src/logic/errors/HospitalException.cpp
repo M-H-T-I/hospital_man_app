@@ -1,22 +1,22 @@
+#pragma once
 #include "HospitalException.hpp"
-#include "../myUtils.hpp"
 
-HospitalException::HospitalException(const char* msg){
+HospitalException::HospitalException() { message[0] = '\0'; }
 
-    int len = getLen(msg);
-
-    if(len > 200){
-        len = 200;
-    }
-
-    for(int i = 0;i < len; i++){
+HospitalException::HospitalException(const char *msg)
+{
+    int i = 0;
+    while (msg[i] != '\0' && i < 199)
+    {
         message[i] = msg[i];
+        i++;
     }
-
-}   
-
-char* HospitalException::what(){
-
-    return message;
-
+    message[i] = '\0';
 }
+
+const char* HospitalException::what() const
+{
+    return message;
+}
+
+HospitalException::~HospitalException() {}

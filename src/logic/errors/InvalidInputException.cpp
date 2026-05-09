@@ -1,6 +1,4 @@
-#include "InvalidInputException.hpp"
+#include "InvalidInputException.hpp" 
 
-InvalidInputException::InvalidInputException(const char* msg): HospitalException(msg){}
-char* InvalidInputException::what(){
-    return message;
-}
+InvalidInputException::InvalidInputException(): HospitalException("Invalid Input Exception given."){}
+InvalidInputException::InvalidInputException(const char *msg) : HospitalException(msg) {}

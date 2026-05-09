@@ -1,7 +1,4 @@
 #include "SlotUnavailableException.hpp"
 
-SlotUnavailableException::SlotUnavailableException(const char* msg): HospitalException(msg){}
-
-char* SlotUnavailableException::what(){
-    return message;
-}
+SlotUnavailableException::SlotUnavailableException() : HospitalException("Selected time slot is unavailable. Please choose another slot.") {}
+SlotUnavailableException::SlotUnavailableException(const char *msg) : HospitalException(msg) {}

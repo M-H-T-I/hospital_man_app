@@ -1,10 +1,8 @@
 #include "HospitalException.hpp"
 
+class FileNotFoundException : public HospitalException
+{
 
-class FileNotFoundException: public HospitalException{
-
-    public:
-        FileNotFoundException(char* msg);
-        char* what();
-
+public:
+    FileNotFoundException(const char *filename);
 };

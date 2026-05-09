@@ -1,9 +1,18 @@
 #include "FileNotFoundException.hpp"
 
-char* FileNotFoundException::what(){
-
-    return message;
-
+FileNotFoundException::FileNotFoundException(const char *filename)
+{
+    const char *prefix = "File not found: ";
+    int i = 0;
+    while (prefix[i] != '\0' && i < 199)
+    {
+        message[i] = prefix[i];
+        i++;
+    }
+    int j = 0;
+    while (filename[j] != '\0' && i < 199)
+    {
+        message[i++] = filename[j++];
+    }
+    message[i] = '\0';
 }
-
-FileNotFoundException::FileNotFoundException(char* msg): HospitalException(msg){}

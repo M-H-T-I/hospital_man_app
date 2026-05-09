@@ -1,19 +1,21 @@
-#include <iostream>
+#pragma once
 
+class HospitalException
+{
+protected:
 
+    char message[200];
 
-class HospitalException{
+public:
+    HospitalException();
 
-    public:
-        char message[200];
+    HospitalException(const char *msg);
 
+    virtual const char *what() const;
 
-        //CONSTRUCTORS
-
-        HospitalException(const char* msg);
-
-
-        //METHODS
-        virtual char* what();
-
+    virtual ~HospitalException();
 };
+
+
+
+
