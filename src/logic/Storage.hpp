@@ -19,7 +19,7 @@ public:
         return true;
     }
 
-    // ── Remove by index (internal helper) ────────────────────────────────────
+    // remove function through index
     void removeAt(int idx)
     {
         if (idx < 0 || idx >= count)
@@ -45,7 +45,6 @@ public:
         return false;
     }
 
-    // ── Find by ID — returns pointer or nullptr ───────────────────────────────
     T *findByID(int id)
     {
         for (int i = 0; i < count; i++)
@@ -66,13 +65,14 @@ public:
         return nullptr;
     }
 
-    // ── Accessors ─────────────────────────────────────────────────────────────
+
     T &get(int idx) { return data[idx]; }
     const T &get(int idx) const { return data[idx]; }
+
     int size() const { return count; }
     void clear() { count = 0; }
 
-    // ── Get all (returns pointer to internal array) ───────────────────────────
+
     T *getAll() { return data; }
     const T *getAll() const { return data; }
 };
