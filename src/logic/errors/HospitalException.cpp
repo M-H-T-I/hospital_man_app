@@ -1,4 +1,4 @@
-#pragma once
+
 #include "HospitalException.hpp"
 
 HospitalException::HospitalException() { message[0] = '\0'; }

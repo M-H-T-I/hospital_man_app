@@ -1,37 +1,36 @@
 #pragma once
 
-#include <iostream>
 #include "Person.hpp"
+#include <iostream>
+
 using namespace std;
 
-class Doctor : public Person
-{
-
+class Doctor: public Person{
 private:
-    char specialization[51]; // max 50 chars
-    double fee;
+    char specialization[51];
+    float fee;
 
 public:
+    //  CONSTRUCTORS
     Doctor();
-    Doctor(int id, const char *name, const char *specialization, const char *contact, const char *password, double fee);
-    virtual ~Doctor();
+    Doctor(int id, const char *name, const char *spec,
+           const char *contact, const char *password, float fee);
 
-    // getters
-    const char *getSpecialization() const;
-    double getFee() const;
+    // GETTERS
+    const char *getSpecialization() const { return specialization; }
+    float getFee() const { return fee; }
 
-    // SETTER
-    void setSpecialization(const char *specialization);
-    void setFee(double fee);
+    // Setters
+    void setSpecialization(const char *s);
+    void setFee(float f) { fee = f; }
 
-    // OPERATOR OVERLOAD
-    bool operator==(const Doctor &other) const;
-    friend ostream &operator<<(ostream &out, Doctor &obj);
+    //  Operator overloads
+    bool operator==(const Doctor &other) const; // compare by ID
+    friend ostream &operator<<(ostream &os, const Doctor &d);
 
-    // extra
-    bool matchesSpecialization(const char *query) const;
+    // VIRTUAL
+    void displayMenu() override;
+    void displayProfile() override;
 
-    // VIRTUAL FUNCTIONS
-    void displayInfo() ;
-    const char *getRole();
+    void toCSV(char *buf, int bufSize) const;
 };

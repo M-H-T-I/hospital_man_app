@@ -1,31 +1,49 @@
-#pragma once
+#ifndef PATIENT_H
+#define PATIENT_H
 
-class Person
-{
-protected:
-    int id;
-    char name[51];
-    char password[51];
-    char contact[12];
+// =============================================================================
+// Patient.h
+// Represents a registered patient. Inherits from Person.
+// Operator overloads: +=, -=, ==, <<
+// =============================================================================
+#include "Person.hpp"
+#include <ostream>
+
+class Patient : public Person {
+private:
+    int   age;
+    char  gender[3];   // "M" or "F"
+    float balance;
 
 public:
-    Person();
-    Person(int id, const char *name, const char *password, const char *contact);
-    virtual ~Person() {}
+    // ── Constructors ─────────────────────────────────────────────────────────
+    Patient();
+    Patient(int id, const char* name, int age, const char* gender,
+            const char* contact, const char* password, float balance);
 
-    // getter
-    int getID() const { return id; }
-    const char *getName() const { return name; }
-    const char *getPassword() const { return password; }
-    const char *getContact() const { return contact; }
+    // ── Accessors ─────────────────────────────────────────────────────────────
+    int         getAge()     const { return age; }
+    const char* getGender()  const { return gender; }
+    float       getBalance() const { return balance; }
 
-    // setter
-    void setID(int newID) { id = newID; }
-    void setName(const char *n);
-    void setPassword(const char *p);
-    void setContact(const char *c);
+    // ── Mutators ──────────────────────────────────────────────────────────────
+    void setAge(int a)            { age = a; }
+    void setGender(const char* g);
+    void setBalance(float b)      { balance = b; }
 
-    // virtual function
-    virtual void displayMenu() = 0;    
-    virtual void displayProfile() = 0; 
+    // ── Operator overloads ────────────────────────────────────────────────────
+    Patient& operator+=(float amount);          // add to balance
+    Patient& operator-=(float amount);          // deduct from balance
+    bool     operator==(const Patient& other) const; // compare by ID
+    friend std::ostream& operator<<(std::ostream& os, const Patient& p);
+
+    // ── Pure virtual implementations ──────────────────────────────────────────
+    void displayMenu()    override;
+    void displayProfile() override;
+
+    // ── CSV serialisation ─────────────────────────────────────────────────────
+    // Format: patient_id,name,age,gender,contact,password,balance
+    void toCSV(char* buf, int bufSize) const;
 };
+
+#endif // PATIENT_H

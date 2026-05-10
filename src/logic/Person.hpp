@@ -1,5 +1,5 @@
 #pragma once
-#include "myUtils.hpp"
+#include "utils/myUtils.hpp"
 
 class Person
 {
@@ -12,7 +12,7 @@ protected:
 public:
     Person();
     Person(int id, const char *name, const char *password, const char *contact);
-    virtual ~Person();
+    virtual ~Person() {};
 
     // getter
     int getID() const { return id; }
