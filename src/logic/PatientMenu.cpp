@@ -1,6 +1,3 @@
-// =============================================================================
-// PatientMenu.cpp
-// =============================================================================
 #include "PatientMenu.hpp"
 #include "FileHandler.hpp"
 #include "Validator.hpp"
@@ -8,428 +5,411 @@
 #include "errors/InvalidInputException.hpp"
 #include "errors/SlotUnavailableException.hpp"
 #include "errors/InsufficientFundsException.hpp"
-#include <iostream>
+#include <cstring>
 #include <cstdio>
 
+
+static void bufCpy(char *dst, const char *src, int max)
+{
+    int i = 0;
+    while (i < max - 1 && src[i]) { dst[i] = src[i]; i++; }
+    dst[i] = '\0';
+}
+static void bufCat(char *dst, const char *src, int max)
+{
+    int i = 0; while (dst[i]) i++;
+    int j = 0;
+    while (i < max - 1 && src[j]) dst[i++] = src[j++];
+    dst[i] = '\0';
+}
+// Append a single int as decimal text
+static void bufCatInt(char *dst, int v, int max)
+{
+    char tmp[24]; Validator::intToStr(v, tmp, 24);
+    bufCat(dst, tmp, max);
+}
+// Append a float with 2 decimal places
+static void bufCatFloat(char *dst, float v, int max)
+{
+    char tmp[32]; Validator::floatToStr(v, tmp, 32, 2);
+    bufCat(dst, tmp, max);
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
-// Date comparison: DD-MM-YYYY — returns -1 if d1 < d2, 0 if equal, 1 if d1 > d2
+// Sorting helpers
 // ─────────────────────────────────────────────────────────────────────────────
 int PatientMenu::compareDates(const char *d1, const char *d2)
 {
     int day1, mon1, yr1, day2, mon2, yr2;
     Validator::parseDate(d1, day1, mon1, yr1);
     Validator::parseDate(d2, day2, mon2, yr2);
-    if (yr1 != yr2)
-        return yr1 < yr2 ? -1 : 1;
-    if (mon1 != mon2)
-        return mon1 < mon2 ? -1 : 1;
-    if (day1 != day2)
-        return day1 < day2 ? -1 : 1;
+    if (yr1  != yr2)  return yr1  < yr2  ? -1 : 1;
+    if (mon1 != mon2) return mon1 < mon2 ? -1 : 1;
+    if (day1 != day2) return day1 < day2 ? -1 : 1;
     return 0;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Manual bubble sorts
-// ─────────────────────────────────────────────────────────────────────────────
 void PatientMenu::sortAppointmentsByDateAsc(Appointment *arr, int n)
 {
     for (int i = 0; i < n - 1; i++)
-    {
         for (int j = 0; j < n - i - 1; j++)
-        {
-            if (compareDates(arr[j].getDate(), arr[j + 1].getDate()) > 0)
+            if (compareDates(arr[j].getDate(), arr[j+1].getDate()) > 0)
             {
-                Appointment tmp = arr[j];
-                arr[j] = arr[j + 1];
-                arr[j + 1] = tmp;
+                Appointment t = arr[j]; arr[j] = arr[j+1]; arr[j+1] = t;
             }
-        }
-    }
 }
 
 void PatientMenu::sortPrescriptionsByDateDesc(Prescription *arr, int n)
 {
     for (int i = 0; i < n - 1; i++)
-    {
         for (int j = 0; j < n - i - 1; j++)
-        {
-            if (compareDates(arr[j].getDate(), arr[j + 1].getDate()) < 0)
+            if (compareDates(arr[j].getDate(), arr[j+1].getDate()) < 0)
             {
-                Prescription tmp = arr[j];
-                arr[j] = arr[j + 1];
-                arr[j + 1] = tmp;
+                Prescription t = arr[j]; arr[j] = arr[j+1]; arr[j+1] = t;
             }
-        }
-    }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Run patient menu loop
+// listDoctorsBySpec  –  used by Book Appointment wizard (step 1 preview)
 // ─────────────────────────────────────────────────────────────────────────────
-void PatientMenu::run(Patient &patient,
-                      Storage<Doctor> &doctors,
-                      Storage<Appointment> &appointments,
-                      Storage<Bill> &bills,
-                      Storage<Prescription> &prescriptions,
-                      Storage<Patient> &patients)
+int PatientMenu::listDoctorsBySpec(const Storage<Doctor> &doctors,
+                                   const char *specialization,
+                                   char *outBuf, int outBufSz)
 {
-    char choice[8];
-    while (true)
-    {
-        patient.displayMenu();
-        std::cin.getline(choice, 8);
-        Validator::trim(choice);
-
-        if (Validator::strEq(choice, "1"))
-            bookAppointment(patient, doctors, appointments, bills, patients);
-        else if (Validator::strEq(choice, "2"))
-            cancelAppointment(patient, appointments, bills, doctors, patients);
-        else if (Validator::strEq(choice, "3"))
-            viewMyAppointments(patient, appointments, doctors);
-        else if (Validator::strEq(choice, "4"))
-            viewMyMedicalRecords(patient, prescriptions, doctors, appointments);
-        else if (Validator::strEq(choice, "5"))
-            viewMyBills(patient, bills);
-        else if (Validator::strEq(choice, "6"))
-            payBill(patient, bills, patients);
-        else if (Validator::strEq(choice, "7"))
-            topUpBalance(patient, patients);
-        else if (Validator::strEq(choice, "8"))
-        {
-            std::cout << "Logged out successfully.\n";
-            break;
-        }
-        else
-        {
-            std::cout << "Invalid choice. Please try again.\n";
-        }
-    }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 1. Book Appointment
-// ─────────────────────────────────────────────────────────────────────────────
-void PatientMenu::bookAppointment(Patient &patient,
-                                  Storage<Doctor> &doctors,
-                                  Storage<Appointment> &appointments,
-                                  Storage<Bill> &bills,
-                                  Storage<Patient> &patients)
-{
-    char spec[51];
-    std::cout << "Enter specialization to search (e.g. Cardiology): ";
-    std::cin.getline(spec, 51);
-    Validator::trim(spec);
-
-    // Display doctors with matching specialization (case-insensitive)
-    int matchCount = 0;
+    outBuf[0] = '\0';
+    int found = 0;
     for (int i = 0; i < doctors.size(); i++)
     {
-        if (Validator::strEqCaseInsensitive(doctors.get(i).getSpecialization(), spec))
+        if (Validator::strEqCaseInsensitive(doctors.get(i).getSpecialization(),
+                                            specialization))
         {
-            char feeBuf[32];
-            Validator::floatToStr(doctors.get(i).getFee(), feeBuf, 32, 2);
-            std::cout << "  ID: " << doctors.get(i).getID()
-                      << " | Name: " << doctors.get(i).getName()
-                      << " | Fee: PKR " << feeBuf << "\n";
-            matchCount++;
+            bufCat(outBuf, "ID: ", outBufSz);
+            bufCatInt(outBuf, doctors.get(i).getID(), outBufSz);
+            bufCat(outBuf, "  |  ", outBufSz);
+            bufCat(outBuf, doctors.get(i).getName(), outBufSz);
+            bufCat(outBuf, "  |  Fee: PKR ", outBufSz);
+            bufCatFloat(outBuf, doctors.get(i).getFee(), outBufSz);
+            bufCat(outBuf, "\n", outBufSz);
+            found++;
         }
     }
-    if (matchCount == 0)
+    if (found == 0)
+        bufCat(outBuf, "No doctors available for that specialization.\n", outBufSz);
+    return found;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// listAvailableSlots  –  used by Book Appointment wizard (step 3 preview)
+// ─────────────────────────────────────────────────────────────────────────────
+int PatientMenu::listAvailableSlots(const Storage<Appointment> &appointments,
+                                    int doctorID, const char *dateStr,
+                                    char *outBuf, int outBufSz)
+{
+    static const char *slots[] = {
+        "09:00","10:00","11:00","12:00","13:00","14:00","15:00","16:00"
+    };
+    outBuf[0] = '\0';
+    int freeCount = 0;
+    for (int s = 0; s < 8; s++)
     {
-        std::cout << "No doctors available for that specialization.\n";
-        return;
+        bool taken = false;
+        for (int a = 0; a < appointments.size(); a++)
+        {
+            const Appointment &ap = appointments.get(a);
+            if (ap.getDoctorID() == doctorID &&
+                Validator::strEq(ap.getDate(), dateStr) &&
+                Validator::strEq(ap.getTimeSlot(), slots[s]) &&
+                !Validator::strEq(ap.getStatus(), "cancelled"))
+            { taken = true; break; }
+        }
+        if (!taken)
+        {
+            bufCat(outBuf, slots[s], outBufSz);
+            bufCat(outBuf, "\n", outBufSz);
+            freeCount++;
+        }
+    }
+    if (freeCount == 0)
+        bufCat(outBuf, "No slots available on this date.\n", outBufSz);
+    return freeCount;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// listPendingAppointments  –  shown in Cancel Appointment wizard
+// ─────────────────────────────────────────────────────────────────────────────
+void PatientMenu::listPendingAppointments(const Patient &patient,
+                                          const Storage<Appointment> &appointments,
+                                          const Storage<Doctor>      &doctors,
+                                          char *outBuf, int outBufSz)
+{
+    outBuf[0] = '\0';
+    bool any = false;
+    for (int i = 0; i < appointments.size(); i++)
+    {
+        const Appointment &ap = appointments.get(i);
+        if (ap.getPatientID() == patient.getID() &&
+            Validator::strEq(ap.getStatus(), "pending"))
+        {
+            const Doctor *doc = doctors.findByID(ap.getDoctorID());
+            bufCat(outBuf, "ID: ", outBufSz);
+            bufCatInt(outBuf, ap.getAppointmentID(), outBufSz);
+            bufCat(outBuf, "  |  Dr. ", outBufSz);
+            bufCat(outBuf, doc ? doc->getName() : "Unknown", outBufSz);
+            bufCat(outBuf, "  |  ", outBufSz);
+            bufCat(outBuf, ap.getDate(), outBufSz);
+            bufCat(outBuf, "  ", outBufSz);
+            bufCat(outBuf, ap.getTimeSlot(), outBufSz);
+            bufCat(outBuf, "\n", outBufSz);
+            any = true;
+        }
+    }
+    if (!any)
+        bufCat(outBuf, "You have no pending appointments.\n", outBufSz);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// listUnpaidBills  –  shown in Pay Bill wizard
+// ─────────────────────────────────────────────────────────────────────────────
+void PatientMenu::listUnpaidBills(const Patient &patient,
+                                   const Storage<Bill> &bills,
+                                   char *outBuf, int outBufSz)
+{
+    outBuf[0] = '\0';
+    bool any = false;
+    for (int i = 0; i < bills.size(); i++)
+    {
+        const Bill &b = bills.get(i);
+        if (b.getPatientID() == patient.getID() &&
+            Validator::strEq(b.getStatus(), "unpaid"))
+        {
+            bufCat(outBuf, "Bill ID: ", outBufSz);
+            bufCatInt(outBuf, b.getBillID(), outBufSz);
+            bufCat(outBuf, "  |  PKR ", outBufSz);
+            bufCatFloat(outBuf, b.getAmount(), outBufSz);
+            bufCat(outBuf, "  |  ", outBufSz);
+            bufCat(outBuf, b.getDate(), outBufSz);
+            bufCat(outBuf, "\n", outBufSz);
+            any = true;
+        }
+    }
+    if (!any)
+        bufCat(outBuf, "No unpaid bills.\n", outBufSz);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 1. bookAppointment
+// ─────────────────────────────────────────────────────────────────────────────
+bool PatientMenu::bookAppointment(Patient &patient,
+                                  Storage<Doctor>      &doctors,
+                                  Storage<Appointment> &appointments,
+                                  Storage<Bill>        &bills,
+                                  Storage<Patient>     &patients,
+                                  const BookAppointmentInput &in,
+                                  char *outBuf, int outBufSz)
+{
+    outBuf[0] = '\0';
+
+    // Validate date
+    if (!Validator::isValidDate(in.date))
+    {
+        bufCpy(outBuf, "Invalid date. Use DD-MM-YYYY format.", outBufSz);
+        return false;
     }
 
-    // Enter Doctor ID
-    char docIDStr[16];
-    std::cout << "Enter Doctor ID: ";
-    std::cin.getline(docIDStr, 16);
-    Validator::trim(docIDStr);
-    int docID = Validator::strToInt(docIDStr);
-    Doctor *doc = doctors.findByID(docID);
+    // Validate doctor
+    Doctor *doc = doctors.findByID(in.doctorID);
     if (!doc)
     {
-        std::cout << "Doctor not found.\n";
-        return;
+        bufCpy(outBuf, "Doctor not found.", outBufSz);
+        return false;
     }
 
-    // Validate date (up to 3 attempts)
-    char dateStr[16];
-    bool validDate = false;
-    for (int attempt = 0; attempt < 3; attempt++)
+    // Validate specialization match (optional safety check)
+    if (!Validator::strEqCaseInsensitive(doc->getSpecialization(), in.specialization))
     {
-        std::cout << "Enter date (DD-MM-YYYY): ";
-        std::cin.getline(dateStr, 16);
-        Validator::trim(dateStr);
-        if (Validator::isValidDate(dateStr))
-        {
-            validDate = true;
-            break;
-        }
-        else
-        {
-            std::cout << "Invalid date. Use format DD-MM-YYYY.\n";
-        }
+        bufCpy(outBuf, "Doctor specialization does not match selection.", outBufSz);
+        return false;
     }
-    if (!validDate)
-        return;
 
-    // Display available slots
-    const char *slots[] = {
-        "09:00", "10:00", "11:00", "12:00",
-        "13:00", "14:00", "15:00", "16:00"};
-
-    auto showAvailableSlots = [&]()
+    // Validate time slot format
+    if (!Validator::isValidTimeSlot(in.timeSlot))
     {
-        std::cout << "Available time slots:\n";
-        for (int s = 0; s < 8; s++)
-        {
-            bool taken = false;
-            for (int a = 0; a < appointments.size(); a++)
-            {
-                Appointment &ap = appointments.get(a);
-                if (ap.getDoctorID() == docID &&
-                    Validator::strEq(ap.getDate(), dateStr) &&
-                    Validator::strEq(ap.getTimeSlot(), slots[s]) &&
-                    !Validator::strEq(ap.getStatus(), "cancelled"))
-                {
-                    taken = true;
-                    break;
-                }
-            }
-            if (!taken)
-                std::cout << "  " << slots[s] << "\n";
-        }
-    };
+        bufCpy(outBuf, "Invalid time slot.", outBufSz);
+        return false;
+    }
 
-    showAvailableSlots();
-
-    // Enter time slot (loop on SlotUnavailableException)
-    char slotStr[8];
-    bool slotBooked = false;
-    while (!slotBooked)
+    // Check slot availability
+    for (int a = 0; a < appointments.size(); a++)
     {
-        std::cout << "Enter time slot (e.g. 09:00): ";
-        std::cin.getline(slotStr, 8);
-        Validator::trim(slotStr);
-
-        if (!Validator::isValidTimeSlot(slotStr))
+        const Appointment &ap = appointments.get(a);
+        if (ap.getDoctorID() == in.doctorID &&
+            Validator::strEq(ap.getDate(), in.date) &&
+            Validator::strEq(ap.getTimeSlot(), in.timeSlot) &&
+            !Validator::strEq(ap.getStatus(), "cancelled"))
         {
-            std::cout << "Invalid time slot.\n";
-            continue;
-        }
-
-        try
-        {
-            // Check if slot is taken
-            for (int a = 0; a < appointments.size(); a++)
-            {
-                Appointment &ap = appointments.get(a);
-                if (ap.getDoctorID() == docID &&
-                    Validator::strEq(ap.getDate(), dateStr) &&
-                    Validator::strEq(ap.getTimeSlot(), slotStr) &&
-                    !Validator::strEq(ap.getStatus(), "cancelled"))
-                {
-                    throw SlotUnavailableException();
-                }
-            }
-            slotBooked = true;
-        }
-        catch (SlotUnavailableException &e)
-        {
-            std::cout << e.what() << "\n";
-            showAvailableSlots();
+            bufCpy(outBuf, "That time slot is already taken. Please choose another.", outBufSz);
+            return false;
         }
     }
 
     // Check balance
-    try
+    if (patient.getBalance() < doc->getFee())
     {
-        if (patient.getBalance() < doc->getFee())
-        {
-            char feeBuf[32];
-            Validator::floatToStr(doc->getFee(), feeBuf, 32, 2);
-            char msg[200] = "Insufficient funds. Doctor fee is PKR ";
-            Validator::strCat(msg, feeBuf, 200);
-            throw InsufficientFundsException(msg);
-        }
-    }
-    catch (InsufficientFundsException &e)
-    {
-        std::cout << e.what() << "\n";
-        return;
+        bufCpy(outBuf, "Insufficient balance. Doctor fee is PKR ", outBufSz);
+        bufCatFloat(outBuf, doc->getFee(), outBufSz);
+        bufCat(outBuf, ". Please top up first.", outBufSz);
+        return false;
     }
 
-    // Deduct fee and create appointment + bill
+    // Commit
     patient -= doc->getFee();
-
-    int newAppID = FileHandler::getNextAppointmentID(appointments);
+    int newAppID  = FileHandler::getNextAppointmentID(appointments);
     int newBillID = FileHandler::getNextBillID(bills);
 
-    Appointment newApp(newAppID, patient.getID(), docID, dateStr, slotStr, "pending");
+    Appointment newApp(newAppID, patient.getID(), in.doctorID,
+                       in.date, in.timeSlot, "pending");
     appointments.add(newApp);
     FileHandler::appendAppointment(newApp);
 
-    Bill newBill(newBillID, patient.getID(), newAppID, doc->getFee(), "unpaid", dateStr);
+    Bill newBill(newBillID, patient.getID(), newAppID,
+                 doc->getFee(), "unpaid", in.date);
     bills.add(newBill);
     FileHandler::appendBill(newBill);
 
-    // Update patient balance in file
     FileHandler::updatePatient(patient, patients);
 
-    char appIDBuf[16];
-    Validator::intToStr(newAppID, appIDBuf, 16);
-    std::cout << "Appointment booked successfully. Appointment ID: " << appIDBuf << "\n";
+    bufCpy(outBuf, "Appointment booked!  ID: ", outBufSz);
+    bufCatInt(outBuf, newAppID, outBufSz);
+    bufCat(outBuf, "\nWith Dr. ", outBufSz);
+    bufCat(outBuf, doc->getName(), outBufSz);
+    bufCat(outBuf, " on ", outBufSz);
+    bufCat(outBuf, in.date, outBufSz);
+    bufCat(outBuf, " at ", outBufSz);
+    bufCat(outBuf, in.timeSlot, outBufSz);
+    bufCat(outBuf, "\nFee deducted: PKR ", outBufSz);
+    bufCatFloat(outBuf, doc->getFee(), outBufSz);
+    bufCat(outBuf, "\nNew balance:  PKR ", outBufSz);
+    bufCatFloat(outBuf, patient.getBalance(), outBufSz);
+    return true;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 2. Cancel Appointment
+// 2. cancelAppointment
 // ─────────────────────────────────────────────────────────────────────────────
-void PatientMenu::cancelAppointment(Patient &patient,
+bool PatientMenu::cancelAppointment(Patient &patient,
                                     Storage<Appointment> &appointments,
-                                    Storage<Bill> &bills,
-                                    Storage<Doctor> &doctors,
-                                    Storage<Patient> &patients)
+                                    Storage<Bill>        &bills,
+                                    Storage<Doctor>      &doctors,
+                                    Storage<Patient>     &patients,
+                                    const CancelAppointmentInput &in,
+                                    char *outBuf, int outBufSz)
 {
-    // Show pending appointments
-    bool hasPending = false;
-    for (int i = 0; i < appointments.size(); i++)
-    {
-        Appointment &ap = appointments.get(i);
-        if (ap.getPatientID() == patient.getID() &&
-            Validator::strEq(ap.getStatus(), "pending"))
-        {
-            Doctor *doc = doctors.findByID(ap.getDoctorID());
-            const char *docName = doc ? doc->getName() : "Unknown";
-            std::cout << "ID: " << ap.getAppointmentID()
-                      << " | Doctor: " << docName
-                      << " | Date: " << ap.getDate()
-                      << " | Time: " << ap.getTimeSlot() << "\n";
-            hasPending = true;
-        }
-    }
-    if (!hasPending)
-    {
-        std::cout << "You have no pending appointments.\n";
-        return;
-    }
+    outBuf[0] = '\0';
 
-    char idStr[16];
-    std::cout << "Enter Appointment ID to cancel: ";
-    std::cin.getline(idStr, 16);
-    Validator::trim(idStr);
-    int appID = Validator::strToInt(idStr);
-
-    // Validate
     Appointment *app = nullptr;
     for (int i = 0; i < appointments.size(); i++)
     {
-        if (appointments.get(i).getAppointmentID() == appID &&
-            appointments.get(i).getPatientID() == patient.getID() &&
-            Validator::strEq(appointments.get(i).getStatus(), "pending"))
-        {
-            app = &appointments.get(i);
-            break;
-        }
+        Appointment &ap = appointments.get(i);
+        if (ap.getAppointmentID() == in.appointmentID &&
+            ap.getPatientID()     == patient.getID() &&
+            Validator::strEq(ap.getStatus(), "pending"))
+        { app = &ap; break; }
     }
     if (!app)
     {
-        std::cout << "Invalid appointment ID.\n";
-        return;
+        bufCpy(outBuf, "Appointment not found or is not cancellable.", outBufSz);
+        return false;
     }
 
-    // Get fee for refund
     Doctor *doc = doctors.findByID(app->getDoctorID());
     float refund = doc ? doc->getFee() : 0.0f;
 
-    // Update appointment status
     app->setStatus("cancelled");
     FileHandler::saveAllAppointments(appointments);
 
-    // Refund balance
     patient += refund;
     FileHandler::updatePatient(patient, patients);
 
-    // Update bill status to cancelled
     for (int i = 0; i < bills.size(); i++)
-    {
-        if (bills.get(i).getAppointmentID() == appID)
-        {
-            bills.get(i).setStatus("cancelled");
-            break;
-        }
-    }
+        if (bills.get(i).getAppointmentID() == in.appointmentID)
+        { bills.get(i).setStatus("cancelled"); break; }
     FileHandler::saveAllBills(bills);
 
-    char refBuf[32];
-    Validator::floatToStr(refund, refBuf, 32, 2);
-    std::cout << "Appointment cancelled. PKR " << refBuf
-              << " refunded to your balance.\n";
+    bufCpy(outBuf, "Appointment cancelled. Refund: PKR ", outBufSz);
+    bufCatFloat(outBuf, refund, outBufSz);
+    bufCat(outBuf, "\nNew balance: PKR ", outBufSz);
+    bufCatFloat(outBuf, patient.getBalance(), outBufSz);
+    return true;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 3. View My Appointments
+// 3. viewMyAppointments
 // ─────────────────────────────────────────────────────────────────────────────
-void PatientMenu::viewMyAppointments(const Patient &patient,
+bool PatientMenu::viewMyAppointments(const Patient &patient,
                                      const Storage<Appointment> &appointments,
-                                     const Storage<Doctor> &doctors)
+                                     const Storage<Doctor>      &doctors,
+                                     char *outBuf, int outBufSz)
 {
-    // Collect patient's appointments into local array for sorting
+    outBuf[0] = '\0';
+
     Appointment myApps[100];
     int count = 0;
     for (int i = 0; i < appointments.size() && count < 100; i++)
-    {
         if (appointments.get(i).getPatientID() == patient.getID())
-        {
             myApps[count++] = appointments.get(i);
-        }
-    }
+
     if (count == 0)
     {
-        std::cout << "No appointments found.\n";
-        return;
+        bufCpy(outBuf, "No appointments found.", outBufSz);
+        return true;
     }
 
     sortAppointmentsByDateAsc(myApps, count);
 
-    std::cout << "-------------------------------------------------------------------\n";
-    std::cout << "ID  | Doctor Name          | Specialization    | Date       | Time  | Status\n";
-    std::cout << "-------------------------------------------------------------------\n";
+    bufCpy(outBuf,
+           "App ID  | Doctor               | Specialization    | Date       | Time  | Status\n"
+           "---------------------------------------------------------------------------------\n",
+           outBufSz);
+
     for (int i = 0; i < count; i++)
     {
         const Doctor *doc = doctors.findByID(myApps[i].getDoctorID());
-        const char *docName = doc ? doc->getName() : "Unknown";
-        const char *docSpec = doc ? doc->getSpecialization() : "Unknown";
-        std::cout << myApps[i].getAppointmentID() << " | "
-                  << docName << " | "
-                  << docSpec << " | "
-                  << myApps[i].getDate() << " | "
-                  << myApps[i].getTimeSlot() << " | "
-                  << myApps[i].getStatus() << "\n";
+        bufCatInt(outBuf, myApps[i].getAppointmentID(), outBufSz);
+        bufCat(outBuf, "  |  ", outBufSz);
+        bufCat(outBuf, doc ? doc->getName() : "Unknown", outBufSz);
+        bufCat(outBuf, "  |  ", outBufSz);
+        bufCat(outBuf, doc ? doc->getSpecialization() : "Unknown", outBufSz);
+        bufCat(outBuf, "  |  ", outBufSz);
+        bufCat(outBuf, myApps[i].getDate(), outBufSz);
+        bufCat(outBuf, "  |  ", outBufSz);
+        bufCat(outBuf, myApps[i].getTimeSlot(), outBufSz);
+        bufCat(outBuf, "  |  ", outBufSz);
+        bufCat(outBuf, myApps[i].getStatus(), outBufSz);
+        bufCat(outBuf, "\n", outBufSz);
     }
+    return true;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 4. View My Medical Records
+// 4. viewMyMedicalRecords
 // ─────────────────────────────────────────────────────────────────────────────
-void PatientMenu::viewMyMedicalRecords(const Patient &patient,
+bool PatientMenu::viewMyMedicalRecords(const Patient &patient,
                                        const Storage<Prescription> &prescriptions,
-                                       const Storage<Doctor> &doctors,
-                                       const Storage<Appointment> & /*appointments*/)
+                                       const Storage<Doctor>       &doctors,
+                                       char *outBuf, int outBufSz)
 {
+    outBuf[0] = '\0';
+
     Prescription myPrx[100];
     int count = 0;
     for (int i = 0; i < prescriptions.size() && count < 100; i++)
-    {
         if (prescriptions.get(i).getPatientID() == patient.getID())
-        {
             myPrx[count++] = prescriptions.get(i);
-        }
-    }
+
     if (count == 0)
     {
-        std::cout << "No medical records found.\n";
-        return;
+        bufCpy(outBuf, "No medical records found.", outBufSz);
+        return true;
     }
 
     sortPrescriptionsByDateDesc(myPrx, count);
@@ -437,162 +417,138 @@ void PatientMenu::viewMyMedicalRecords(const Patient &patient,
     for (int i = 0; i < count; i++)
     {
         const Doctor *doc = doctors.findByID(myPrx[i].getDoctorID());
-        std::cout << "---\n";
-        std::cout << "Date: " << myPrx[i].getDate() << "\n";
-        std::cout << "Doctor: " << (doc ? doc->getName() : "Unknown") << "\n";
-        std::cout << "Medicines: " << myPrx[i].getMedicines() << "\n";
-        std::cout << "Notes: " << myPrx[i].getNotes() << "\n";
+        bufCat(outBuf, "─────────────────────────────\n", outBufSz);
+        bufCat(outBuf, "Date:      ", outBufSz);
+        bufCat(outBuf, myPrx[i].getDate(), outBufSz);
+        bufCat(outBuf, "\nDoctor:    ", outBufSz);
+        bufCat(outBuf, doc ? doc->getName() : "Unknown", outBufSz);
+        bufCat(outBuf, "\nMedicines: ", outBufSz);
+        bufCat(outBuf, myPrx[i].getMedicines(), outBufSz);
+        bufCat(outBuf, "\nNotes:     ", outBufSz);
+        bufCat(outBuf, myPrx[i].getNotes(), outBufSz);
+        bufCat(outBuf, "\n", outBufSz);
     }
+    return true;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 5. View My Bills
+// 5. viewMyBills
 // ─────────────────────────────────────────────────────────────────────────────
-void PatientMenu::viewMyBills(const Patient &patient,
-                              const Storage<Bill> &bills)
+bool PatientMenu::viewMyBills(const Patient &patient,
+                              const Storage<Bill> &bills,
+                              char *outBuf, int outBufSz)
 {
+    outBuf[0] = '\0';
+
+    bufCpy(outBuf,
+           "Bill ID  | App ID  | Amount (PKR)  | Status     | Date\n"
+           "────────────────────────────────────────────────────────\n",
+           outBufSz);
+
     bool found = false;
     float totalUnpaid = 0.0f;
 
-    std::cout << "Bill ID | Appointment ID | Amount (PKR) | Status     | Date\n";
-    std::cout << "-------------------------------------------------------------\n";
-
     for (int i = 0; i < bills.size(); i++)
     {
         const Bill &b = bills.get(i);
-        if (b.getPatientID() == patient.getID())
-        {
-            char amtBuf[32];
-            Validator::floatToStr(b.getAmount(), amtBuf, 32, 2);
-            std::cout << b.getBillID() << " | "
-                      << b.getAppointmentID() << "              | "
-                      << amtBuf << "       | "
-                      << b.getStatus() << " | "
-                      << b.getDate() << "\n";
-            found = true;
-            if (Validator::strEq(b.getStatus(), "unpaid"))
-                totalUnpaid += b.getAmount();
-        }
+        if (b.getPatientID() != patient.getID()) continue;
+
+        bufCatInt(outBuf, b.getBillID(), outBufSz);
+        bufCat(outBuf, "  |  ", outBufSz);
+        bufCatInt(outBuf, b.getAppointmentID(), outBufSz);
+        bufCat(outBuf, "  |  PKR ", outBufSz);
+        bufCatFloat(outBuf, b.getAmount(), outBufSz);
+        bufCat(outBuf, "  |  ", outBufSz);
+        bufCat(outBuf, b.getStatus(), outBufSz);
+        bufCat(outBuf, "  |  ", outBufSz);
+        bufCat(outBuf, b.getDate(), outBufSz);
+        bufCat(outBuf, "\n", outBufSz);
+        found = true;
+
+        if (Validator::strEq(b.getStatus(), "unpaid"))
+            totalUnpaid += b.getAmount();
     }
+
     if (!found)
     {
-        std::cout << "No bills found.\n";
-        return;
+        bufCpy(outBuf, "No bills found.", outBufSz);
+        return true;
     }
-    char totBuf[32];
-    Validator::floatToStr(totalUnpaid, totBuf, 32, 2);
-    std::cout << "Total Outstanding Unpaid: PKR " << totBuf << "\n";
+
+    bufCat(outBuf, "────────────────────────────────────────────────────────\n", outBufSz);
+    bufCat(outBuf, "Total outstanding unpaid: PKR ", outBufSz);
+    bufCatFloat(outBuf, totalUnpaid, outBufSz);
+    bufCat(outBuf, "\n", outBufSz);
+    return true;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 6. Pay Bill
+// 6. payBill
 // ─────────────────────────────────────────────────────────────────────────────
-void PatientMenu::payBill(Patient &patient,
-                          Storage<Bill> &bills,
-                          Storage<Patient> &patients)
+bool PatientMenu::payBill(Patient &patient,
+                          Storage<Bill>    &bills,
+                          Storage<Patient> &patients,
+                          const PayBillInput &in,
+                          char *outBuf, int outBufSz)
 {
-    // Show unpaid bills
-    bool hasUnpaid = false;
-    for (int i = 0; i < bills.size(); i++)
-    {
-        const Bill &b = bills.get(i);
-        if (b.getPatientID() == patient.getID() &&
-            Validator::strEq(b.getStatus(), "unpaid"))
-        {
-            char amtBuf[32];
-            Validator::floatToStr(b.getAmount(), amtBuf, 32, 2);
-            std::cout << "Bill ID: " << b.getBillID()
-                      << " | Amount: PKR " << amtBuf
-                      << " | Date: " << b.getDate() << "\n";
-            hasUnpaid = true;
-        }
-    }
-    if (!hasUnpaid)
-    {
-        std::cout << "No unpaid bills.\n";
-        return;
-    }
+    outBuf[0] = '\0';
 
-    char idStr[16];
-    std::cout << "Enter Bill ID to pay: ";
-    std::cin.getline(idStr, 16);
-    Validator::trim(idStr);
-    int billID = Validator::strToInt(idStr);
-
-    // Validate
     Bill *bill = nullptr;
     for (int i = 0; i < bills.size(); i++)
     {
-        if (bills.get(i).getBillID() == billID &&
-            bills.get(i).getPatientID() == patient.getID() &&
-            Validator::strEq(bills.get(i).getStatus(), "unpaid"))
-        {
-            bill = &bills.get(i);
-            break;
-        }
+        Bill &b = bills.get(i);
+        if (b.getBillID()        == in.billID &&
+            b.getPatientID()     == patient.getID() &&
+            Validator::strEq(b.getStatus(), "unpaid"))
+        { bill = &b; break; }
     }
     if (!bill)
     {
-        std::cout << "Invalid bill ID.\n";
-        return;
+        bufCpy(outBuf, "Bill not found or already paid.", outBufSz);
+        return false;
     }
 
-    try
+    if (patient.getBalance() < bill->getAmount())
     {
-        if (patient.getBalance() < bill->getAmount())
-        {
-            throw InsufficientFundsException(
-                "Insufficient funds. Please top up your balance.");
-        }
-    }
-    catch (InsufficientFundsException &e)
-    {
-        std::cout << e.what() << "\n";
-        return;
+        bufCpy(outBuf, "Insufficient balance. Bill amount: PKR ", outBufSz);
+        bufCatFloat(outBuf, bill->getAmount(), outBufSz);
+        bufCat(outBuf, "  |  Your balance: PKR ", outBufSz);
+        bufCatFloat(outBuf, patient.getBalance(), outBufSz);
+        bufCat(outBuf, "\nPlease top up first.", outBufSz);
+        return false;
     }
 
     patient -= bill->getAmount();
     bill->setStatus("paid");
-
     FileHandler::saveAllBills(bills);
     FileHandler::updatePatient(patient, patients);
 
-    char balBuf[32];
-    Validator::floatToStr(patient.getBalance(), balBuf, 32, 2);
-    std::cout << "Bill paid successfully. Remaining balance: PKR " << balBuf << "\n";
+    bufCpy(outBuf, "Bill paid successfully!\nRemaining balance: PKR ", outBufSz);
+    bufCatFloat(outBuf, patient.getBalance(), outBufSz);
+    return true;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 7. Top Up Balance
+// 7. topUpBalance
 // ─────────────────────────────────────────────────────────────────────────────
-void PatientMenu::topUpBalance(Patient &patient,
-                               Storage<Patient> &patients)
+bool PatientMenu::topUpBalance(Patient &patient,
+                               Storage<Patient> &patients,
+                               const TopUpInput &in,
+                               char *outBuf, int outBufSz)
 {
-    char amtStr[32];
-    for (int attempt = 0; attempt < 3; attempt++)
-    {
-        std::cout << "Enter amount to add (PKR): ";
-        std::cin.getline(amtStr, 32);
-        Validator::trim(amtStr);
-        try
-        {
-            if (!Validator::isPositiveFloat(amtStr))
-            {
-                throw InvalidInputException("Amount must be a positive number.");
-            }
-            float amt = Validator::strToFloat(amtStr);
-            patient += amt;
-            FileHandler::updatePatient(patient, patients);
+    outBuf[0] = '\0';
 
-            char balBuf[32];
-            Validator::floatToStr(patient.getBalance(), balBuf, 32, 2);
-            std::cout << "Balance updated. New balance: PKR " << balBuf << "\n";
-            return;
-        }
-        catch (InvalidInputException &e)
-        {
-            std::cout << e.what() << "\n";
-        }
+    if (!Validator::isPositiveFloat(in.amount))
+    {
+        bufCpy(outBuf, "Invalid amount. Please enter a positive number.", outBufSz);
+        return false;
     }
-    std::cout << "Too many invalid attempts. Returning to menu.\n";
+
+    float amt = Validator::strToFloat(in.amount);
+    patient += amt;
+    FileHandler::updatePatient(patient, patients);
+
+    bufCpy(outBuf, "Balance updated!\nNew balance: PKR ", outBufSz);
+    bufCatFloat(outBuf, patient.getBalance(), outBufSz);
+    return true;
 }

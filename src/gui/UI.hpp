@@ -11,20 +11,45 @@
 
 namespace Colors
 {
-    inline const sf::Color BG{12, 18, 30};
-    inline const sf::Color PANEL{20, 30, 50};
-    inline const sf::Color ACCENT{0, 180, 216};
-    inline const sf::Color ACCENT2{72, 149, 239};
-    inline const sf::Color TEXT{220, 230, 245};
-    inline const sf::Color TEXT_DIM{120, 140, 170};
-    inline const sf::Color SUCCESS{56, 183, 100};
-    inline const sf::Color ERROR{230, 70, 70};
-    inline const sf::Color WARNING{255, 185, 0};
-    inline const sf::Color BORDER{40, 60, 90};
-    inline const sf::Color BTN_NORM{30, 45, 70};
-    inline const sf::Color BTN_HOV{0, 150, 190};
-    inline const sf::Color INPUT_BG{28, 40, 62};
-    inline const sf::Color INPUT_ON{35, 50, 80};
+    // inline const sf::Color BG{12, 18, 30};
+    // inline const sf::Color PANEL{20, 30, 50};
+    // inline const sf::Color ACCENT{0, 180, 216};
+    // inline const sf::Color ACCENT2{72, 149, 239};
+    // inline const sf::Color TEXT{220, 230, 245};
+    // inline const sf::Color TEXT_DIM{120, 140, 170};
+    // inline const sf::Color SUCCESS{56, 183, 100};
+    // inline const sf::Color ERROR{230, 70, 70};
+    // inline const sf::Color WARNING{255, 185, 0};
+    // inline const sf::Color BORDER{40, 60, 90};
+    // inline const sf::Color BTN_NORM{30, 45, 70};
+    // inline const sf::Color BTN_HOV{0, 150, 190};
+    // inline const sf::Color INPUT_BG{28, 40, 62};
+    // inline const sf::Color INPUT_ON{35, 50, 80};
+
+    // Base Surfaces
+    inline const sf::Color BG{255, 255, 255};       // Pure White
+    inline const sf::Color PANEL{255, 255, 255};    
+    // Accents
+    inline const sf::Color ACCENT{0, 0, 0};         // Pure Black
+    inline const sf::Color ACCENT2{0, 0, 0};        // Pure Black
+    
+    // Typography
+    inline const sf::Color TEXT{0, 0, 0};           // Pure Black
+    inline const sf::Color TEXT_DIM{0, 0, 0};       // Pure Black (No grey allowed)
+    
+    // Status (All mapped to Black for a true 1-bit look)
+    inline const sf::Color SUCCESS{0, 0, 0}; 
+    inline const sf::Color ERROR{0, 0, 0};   
+    inline const sf::Color WARNING{0, 0, 0}; 
+    
+    // UI Elements
+    inline const sf::Color BORDER{0, 0, 0};         // Pure Black
+    inline const sf::Color BTN_NORM{255, 255, 255}; // White Button
+    inline const sf::Color BTN_HOV{0, 0, 0};        // Black Button (Inverts on hover)
+    
+    // Inputs
+    inline const sf::Color INPUT_BG{255, 255, 255}; 
+    inline const sf::Color INPUT_ON{255, 255, 255};
 }
 
 static constexpr unsigned WIN_W = 1100;
