@@ -1,18 +1,3 @@
-// =============================================================================
-// UI.cpp  –  Full SFML GUI  (no blocking terminal menus)
-//
-// Architecture
-// ────────────
-// Each menu action that needs user input opens a "Modal" overlay built from
-// TextField widgets.  The modal collects the required fields, calls the
-// corresponding stateless action function, then shows the result in the
-// Output Panel.  Actions that are purely read-only (view*) are called
-// directly and their text is shown in the Output Panel.
-//
-// The Output Panel is a scrollable text area on the right side of each
-// menu screen.  It shows the last result until the next action is triggered.
-// =============================================================================
-
 #include "UI.hpp"
 #include "FileHandler.hpp"
 #include "Validator.hpp"
@@ -26,9 +11,7 @@
 #include <ctime>
 #include <cmath>
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Internal string helpers (no <string>)
-// ─────────────────────────────────────────────────────────────────────────────
+
 static void safeCpy(char *dst, const char *src, int max)
 {
     int i = 0;
@@ -61,9 +44,7 @@ static bool loadFont(sf::Font &font)
     return false;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Drawing primitives
-// ─────────────────────────────────────────────────────────────────────────────
+
 static void drawRect(sf::RenderWindow &win, float x, float y, float w, float h,
                      sf::Color fill, sf::Color outline = sf::Color::Transparent,
                      float thick = 0.f)
@@ -88,11 +69,10 @@ static void drawLabel(sf::RenderWindow &win, const sf::Font &font,
     t.setPosition(x, y);
     win.draw(t);
 }
-static void drawCentered(sf::RenderWindow &win, const sf::Font &font,
-                         const char *str, unsigned size,
-                         float boxX, float boxY, float boxW,
+static void drawCentered(sf::RenderWindow &win, const sf::Font &font, const char *str, unsigned size, float boxX, float boxY, float boxW,
                          sf::Color col = Colors::TEXT)
 {
+
     sf::Text t;
     t.setFont(font);
     t.setString(str);
@@ -101,6 +81,7 @@ static void drawCentered(sf::RenderWindow &win, const sf::Font &font,
     t.setPosition(boxX + (boxW - t.getLocalBounds().width) / 2.f, boxY);
     win.draw(t);
 }
+
 static void drawTopBar(sf::RenderWindow &win, const sf::Font &font)
 {
     drawRect(win, 0, 0, WIN_W, 58, Colors::PANEL, Colors::BORDER, 1.f);
@@ -117,13 +98,9 @@ static void drawStatusBar(sf::RenderWindow &win, const sf::Font &font, AppState 
         return;
     sf::Color bg = app.statusIsError ? sf::Color(80, 20, 20, 230) : sf::Color(10, 55, 35, 230);
     drawRect(win, 0, WIN_H - 34.f, WIN_W, 34.f, bg);
-    drawLabel(win, font, app.statusMsg, 14, 18.f, WIN_H - 24.f,
-              app.statusIsError ? Colors::ERROR : Colors::SUCCESS);
+    drawLabel(win, font, app.statusMsg, 14, 18.f, WIN_H - 24.f, app.statusIsError ? Colors::ERROR : Colors::SUCCESS);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// TextField
-// ─────────────────────────────────────────────────────────────────────────────
 void TextField::init(float x, float y, float w, float h)
 {
     box.setSize(sf::Vector2f(w, h));
@@ -153,12 +130,14 @@ void TextField::handleClick(sf::Vector2i mouse)
 {
     focused = box.getGlobalBounds().contains((float)mouse.x, (float)mouse.y);
 }
+
 void TextField::clear()
 {
     for (int i = 0; i < 256; i++)
         buf[i] = '\0';
     len = 0;
 }
+
 void TextField::draw(sf::RenderWindow &win, const sf::Font &font, unsigned cs)
 {
     box.setFillColor(focused ? Colors::INPUT_ON : Colors::INPUT_BG);
@@ -171,6 +150,7 @@ void TextField::draw(sf::RenderWindow &win, const sf::Font &font, unsigned cs)
             tmp[i] = '*';
         tmp[len] = '\0';
     }
+
     else
         safeCpy(tmp, buf, 258);
     if (focused)
@@ -188,9 +168,9 @@ void TextField::draw(sf::RenderWindow &win, const sf::Font &font, unsigned cs)
     win.draw(t);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Button
-// ─────────────────────────────────────────────────────────────────────────────
+
+
+
 void Button::init(const char *text, float x, float y, float w, float h, sf::Color accent)
 {
     shape.setSize(sf::Vector2f(w, h));
@@ -228,9 +208,9 @@ void Button::draw(sf::RenderWindow &win, const sf::Font &font, sf::Vector2i mous
     win.draw(t);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// AppState
-// ─────────────────────────────────────────────────────────────────────────────
+
+
+
 void AppState::setStatus(const char *msg, bool isError)
 {
     safeCpy(statusMsg, msg, 256);
@@ -273,9 +253,9 @@ void AppState::reloadAndRefresh()
         screen = Screen::ROLE_SELECT;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MenuPanel  –  vertical list of buttons
-// ─────────────────────────────────────────────────────────────────────────────
+
+
+
 struct MenuPanel
 {
     static constexpr int MAX = 13;
@@ -304,14 +284,14 @@ struct MenuPanel
     void reset() { inited = false; }
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// OutputPanel  –  scrollable multi-line text area
-// ─────────────────────────────────────────────────────────────────────────────
+
+
+
 struct OutputPanel
 {
     static constexpr int BUFSIZE = 8192;
     char buf[BUFSIZE] = {};
-    float scrollY = 0.f; // pixels scrolled down
+    float scrollY = 0.f; 
     float panelH = 0.f;
     float panelW = 0.f;
     float panelX = 0.f;
@@ -349,18 +329,18 @@ struct OutputPanel
         drawRect(win, panelX, panelY, panelW, 28.f, accent);
         drawLabel(win, font, "Output", 12, panelX + 8.f, panelY + 7.f, Colors::BG);
 
-        // Clip via a RenderTexture trick is not available here; we use scissor
-        // via sf::View instead.
+        
+        
         sf::View oldView = win.getView();
 
-        // Create a viewport that maps to the panel interior
+        
         float tx = panelX, ty = panelY + 28.f, tw = panelW, th = panelH - 28.f;
         sf::FloatRect vp(tx / WIN_W, ty / WIN_H, tw / WIN_W, th / WIN_H);
         sf::View clipView(sf::FloatRect(0, 0, tw, th));
         clipView.setViewport(vp);
         win.setView(clipView);
 
-        // Draw text lines
+        
         const unsigned CS = 13;
         float lineH = (float)(CS + 4);
         float y = -scrollY + 4.f;
@@ -399,22 +379,22 @@ struct OutputPanel
     }
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Modal dialog  –  collects multi-field input then fires an action
-// ─────────────────────────────────────────────────────────────────────────────
+
+
+
 static constexpr int MODAL_MAX_FIELDS = 8;
 static constexpr int MODAL_MAX_LABELS = 8;
 
 struct Modal
 {
     bool active = false;
-    int action = -1; // which menu item triggered this modal
+    int action = -1; 
     char title[64] = {};
     char labels[MODAL_MAX_LABELS][64] = {};
     int fieldCount = 0;
     TextField fields[MODAL_MAX_FIELDS];
     Button submitBtn, cancelBtn;
-    // Optional preview text (e.g. list of available doctors / slots)
+    
     char previewBuf[4096] = {};
     bool hasPreview = false;
     bool inited = false;
@@ -435,14 +415,14 @@ struct Modal
             fields[i].clear();
             fields[i].isPassword = false;
         }
-        // Password fields: detect by label keyword
+        
         for (int i = 0; i < fieldCount; i++)
         {
             const char *l = labels[i];
             int li = 0;
             while (l[li])
                 li++;
-            // simple case-insensitive search for "password"
+            
             for (int k = 0; k + 7 < li; k++)
             {
                 char s[9];
@@ -463,8 +443,7 @@ struct Modal
             totalH += 120.f;
 
         submitBtn.init("Submit", cx + 20.f, cy + totalH - 48.f, 160.f, 36.f, Colors::ACCENT);
-        cancelBtn.init("Cancel", cx + 200.f, cy + totalH - 48.f, 160.f, 36.f, Colors::ERROR);
-        previewBuf[0] = '\0';
+        cancelBtn.init("Cancel", cx + 200.f, cy + totalH - 48.f, 160.f, 36.f, sf::Color(180, 40, 40));
         active = true;
         inited = true;
     }
@@ -476,15 +455,15 @@ struct Modal
         action = -1;
     }
 
-    // Returns true if submit was pressed, false if cancel
-    // ev may be nullptr (render pass)
+    
+    
     int handleAndDraw(sf::RenderWindow &win, const sf::Font &font,
                       sf::Vector2i mouse, const sf::Event *ev)
     {
         if (!active)
             return 0;
 
-        // Dim background
+        
         sf::RectangleShape dim(sf::Vector2f((float)WIN_W, (float)WIN_H));
         dim.setFillColor(sf::Color(0, 0, 0, 160));
         win.draw(dim);
@@ -503,7 +482,7 @@ struct Modal
         {
             drawRect(win, cx + 10.f, fy, fw - 20.f, 110.f,
                      sf::Color(15, 25, 42), Colors::BORDER, 1.f);
-            // draw preview lines
+            
             const unsigned CS = 12;
             float py = fy + 4.f;
             int ps = 0;
@@ -520,7 +499,7 @@ struct Modal
                         for (int k = 0; k < cp; k++)
                             line[k] = previewBuf[ps + k];
                         line[cp] = '\0';
-                        drawLabel(win, font, line, CS, cx + 14.f, py, Colors::TEXT_DIM);
+                        drawLabel(win, font, line, CS, cx + 14.f, py, sf::Color::White);
                     }
                     py += (float)(CS + 4);
                     ps = i + 1;
@@ -531,7 +510,7 @@ struct Modal
 
         for (int i = 0; i < fieldCount; i++)
         {
-            // reposition fields to match final layout
+            
             fields[i].box.setPosition(cx + 20.f, fy + 18.f);
             drawLabel(win, font, labels[i], 12, cx + 20.f, fy + 2.f, Colors::TEXT_DIM);
             if (ev)
@@ -543,7 +522,7 @@ struct Modal
             fy += 54.f;
         }
 
-        // Reposition buttons
+        
         submitBtn.shape.setPosition(cx + 20.f, fy + 6.f);
         cancelBtn.shape.setPosition(cx + 210.f, fy + 6.f);
         submitBtn.draw(win, font, mouse);
@@ -555,7 +534,7 @@ struct Modal
                 return 1;
             if (cancelBtn.isClicked(mouse, *ev))
                 return -1;
-            // Enter key submits
+            
             if (ev->type == sf::Event::KeyPressed &&
                 ev->key.code == sf::Keyboard::Return)
                 return 1;
@@ -564,9 +543,9 @@ struct Modal
     }
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Forward declarations
-// ─────────────────────────────────────────────────────────────────────────────
+
+
+
 static void drawSplash(sf::RenderWindow &, const sf::Font &, float, AppState &, const sf::Event *);
 static void drawRoleSelect(sf::RenderWindow &, const sf::Font &, AppState &, sf::Vector2i, const sf::Event *);
 static void drawLogin(sf::RenderWindow &, const sf::Font &, AppState &, sf::Vector2i, const sf::Event *);
@@ -574,9 +553,9 @@ static void drawPatientMenu(sf::RenderWindow &, const sf::Font &, AppState &, sf
 static void drawDoctorMenu(sf::RenderWindow &, const sf::Font &, AppState &, sf::Vector2i, const sf::Event *);
 static void drawAdminMenu(sf::RenderWindow &, const sf::Font &, AppState &, sf::Vector2i, const sf::Event *);
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SPLASH
-// ─────────────────────────────────────────────────────────────────────────────
+
+
+
 static float splashElapsed = 0.f;
 static void drawSplash(sf::RenderWindow &win, const sf::Font &font,
                        float dt, AppState &app, const sf::Event *ev)
@@ -623,9 +602,9 @@ static void drawSplash(sf::RenderWindow &win, const sf::Font &font,
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ROLE SELECT
-// ─────────────────────────────────────────────────────────────────────────────
+
+
+
 static Button roleButtons[4];
 static bool roleButtonsInit = false;
 static void drawRoleSelect(sf::RenderWindow &win, const sf::Font &font,
@@ -665,9 +644,9 @@ static void drawRoleSelect(sf::RenderWindow &win, const sf::Font &font,
     drawStatusBar(win, font, app);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// LOGIN
-// ─────────────────────────────────────────────────────────────────────────────
+
+
+
 static TextField loginIdField, loginPwField;
 static Button loginBtn, loginBackBtn;
 static bool loginInited = false;
@@ -685,7 +664,7 @@ static void drawLogin(sf::RenderWindow &win, const sf::Font &font,
                       AppState &app, sf::Vector2i mouse, const sf::Event *ev)
 {
     drawRect(win, 0, 0, WIN_W, WIN_H, Colors::BG);
-    // drawRect(win, 0, 0, 5, WIN_H, Colors::ACCENT);
+    
     float cw = 420.f, ch = 380.f, cx = (WIN_W - cw) / 2.f, cy = (WIN_H - ch) / 2.f;
     drawRect(win, cx, cy, cw, ch, Colors::PANEL, Colors::BORDER, 1.5f);
     drawRect(win, cx, cy, cw, 60.f, Colors::ACCENT);
@@ -811,16 +790,16 @@ static void drawLogin(sf::RenderWindow &win, const sf::Font &font,
     drawStatusBar(win, font, app);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// PATIENT MENU
-// ─────────────────────────────────────────────────────────────────────────────
+
+
+
 static MenuPanel patPanel;
 static OutputPanel patOutput;
 static Modal patModal;
-// Book Appointment is a 4-step wizard: we track which step we're in.
-// Step 0: spec input  -> preview doctors
-// Step 1: doctor ID + date -> preview slots
-// Step 2: slot selection -> book
+
+
+
+
 static int patBookStep = 0;
 static BookAppointmentInput patBookInput;
 
@@ -831,10 +810,10 @@ static void patHandleAction(int action, AppState &app)
 
     switch (action)
     {
-    // ── 0: Book Appointment ─────────────────────────────────────────────────
+    
     case 0:
     {
-        // Step 0: ask for specialization
+        
         patBookStep = 0;
         patBookInput = BookAppointmentInput{};
         char lbl[1][64];
@@ -844,7 +823,7 @@ static void patHandleAction(int action, AppState &app)
                       1, lbl, (WIN_W - 400.f) / 2.f, (WIN_H - 220.f) / 2.f);
         break;
     }
-    // ── 1: Cancel Appointment ───────────────────────────────────────────────
+    
     case 1:
     {
         PatientMenu::listPendingAppointments(*app.loggedPatient, app.appointments,
@@ -852,12 +831,12 @@ static void patHandleAction(int action, AppState &app)
         char lbl[1][64];
         safeCpy(lbl[0], "Appointment ID to cancel", 64);
         patModal.hasPreview = true;
-        safeCpy(patModal.previewBuf, outBuf, 4096);
         patModal.open(1, "Cancel Appointment", 1, lbl,
                       (WIN_W - 400.f) / 2.f, (WIN_H - 300.f) / 2.f);
+        safeCpy(patModal.previewBuf, outBuf, 4096);
         break;
     }
-    // ── 2: View My Appointments ─────────────────────────────────────────────
+    
     case 2:
     {
         PatientMenu::viewMyAppointments(*app.loggedPatient, app.appointments,
@@ -865,7 +844,7 @@ static void patHandleAction(int action, AppState &app)
         patOutput.setText(outBuf);
         break;
     }
-    // ── 3: View My Medical Records ──────────────────────────────────────────
+    
     case 3:
     {
         PatientMenu::viewMyMedicalRecords(*app.loggedPatient, app.prescriptions,
@@ -873,26 +852,26 @@ static void patHandleAction(int action, AppState &app)
         patOutput.setText(outBuf);
         break;
     }
-    // ── 4: View My Bills ────────────────────────────────────────────────────
+    
     case 4:
     {
         PatientMenu::viewMyBills(*app.loggedPatient, app.bills, outBuf, 8192);
         patOutput.setText(outBuf);
         break;
     }
-    // ── 5: Pay Bill ─────────────────────────────────────────────────────────
+    
     case 5:
     {
         PatientMenu::listUnpaidBills(*app.loggedPatient, app.bills, outBuf, 8192);
         char lbl[1][64];
         safeCpy(lbl[0], "Bill ID to pay", 64);
         patModal.hasPreview = true;
-        safeCpy(patModal.previewBuf, outBuf, 4096);
         patModal.open(5, "Pay Bill", 1, lbl,
                       (WIN_W - 400.f) / 2.f, (WIN_H - 300.f) / 2.f);
+        safeCpy(patModal.previewBuf, outBuf, 4096);
         break;
     }
-    // ── 6: Top Up Balance ───────────────────────────────────────────────────
+    
     case 6:
     {
         char lbl[1][64];
@@ -913,7 +892,7 @@ static void drawPatientMenu(sf::RenderWindow &win, const sf::Font &font,
     drawRect(win, 0, 0, WIN_W, WIN_H, Colors::BG);
     drawTopBar(win, font);
 
-    // Profile card
+    
     float px = WIN_W - 310.f, py = 68.f;
     drawRect(win, px, py, 280.f, 178.f, Colors::PANEL, Colors::BORDER, 1.f);
     drawRect(win, px, py, 280.f, 32.f, Colors::ACCENT2);
@@ -943,7 +922,7 @@ static void drawPatientMenu(sf::RenderWindow &win, const sf::Font &font,
     if (!patPanel.inited)
         patPanel.init(items, 8, 48.f, 116.f, 310.f, 40.f, 5.f);
 
-    // Output panel
+    
     patOutput.setup(390.f, 68.f, WIN_W - 710.f, WIN_H - 112.f);
     if (ev)
         patOutput.handleScroll(*ev, mouse);
@@ -961,7 +940,7 @@ static void drawPatientMenu(sf::RenderWindow &win, const sf::Font &font,
     else if (clicked >= 0 && !patModal.active)
         patHandleAction(clicked, app);
 
-    // ── Modal handling ───────────────────────────────────────────────────────
+    
     if (patModal.active)
     {
         int res = patModal.handleAndDraw(win, font, mouse, ev);
@@ -977,7 +956,7 @@ static void drawPatientMenu(sf::RenderWindow &win, const sf::Font &font,
 
             if (patModal.action == 0)
             {
-                // Book step 0: got specialization -> show doctors, open step 1
+                
                 if (patBookStep == 0)
                 {
                     safeCpy(patBookInput.specialization, patModal.fields[0].buf, 51);
@@ -992,20 +971,20 @@ static void drawPatientMenu(sf::RenderWindow &win, const sf::Font &font,
                     }
                     else
                     {
-                        // Step 1: ask doctor ID + date
+                        
                         patBookStep = 1;
                         char lbl[2][64];
                         safeCpy(lbl[0], "Doctor ID", 64);
                         safeCpy(lbl[1], "Date (DD-MM-YYYY)", 64);
                         patModal.hasPreview = true;
-                        safeCpy(patModal.previewBuf, preview, 4096);
                         patModal.open(0, "Book Appointment – Step 2/3: Doctor & Date",
                                       2, lbl, (WIN_W - 400.f) / 2.f, (WIN_H - 320.f) / 2.f);
+                        safeCpy(patModal.previewBuf, preview, 4096);
                     }
                 }
                 else if (patBookStep == 1)
                 {
-                    // Got doctor ID + date -> show slots, open step 2
+                    
                     patBookInput.doctorID = Validator::strToInt(patModal.fields[0].buf);
                     safeCpy(patBookInput.date, patModal.fields[1].buf, 16);
                     if (!Validator::isValidDate(patBookInput.date))
@@ -1024,12 +1003,12 @@ static void drawPatientMenu(sf::RenderWindow &win, const sf::Font &font,
                         char lbl[1][64];
                         safeCpy(lbl[0], "Time Slot (e.g. 09:00)", 64);
                         patModal.hasPreview = true;
-                        safeCpy(patModal.previewBuf, slotPreview, 4096);
                         patModal.open(0, "Book Appointment – Step 3/3: Choose Slot",
                                       1, lbl, (WIN_W - 400.f) / 2.f, (WIN_H - 300.f) / 2.f);
+                        safeCpy(patModal.previewBuf, slotPreview, 4096);
                     }
                 }
-                else // step 2: got time slot -> book
+                else 
                 {
                     safeCpy(patBookInput.timeSlot, patModal.fields[0].buf, 8);
                     ok = PatientMenu::bookAppointment(*app.loggedPatient,
@@ -1085,9 +1064,9 @@ static void drawPatientMenu(sf::RenderWindow &win, const sf::Font &font,
     drawStatusBar(win, font, app);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// DOCTOR MENU
-// ─────────────────────────────────────────────────────────────────────────────
+
+
+
 static MenuPanel docPanel;
 static OutputPanel docOutput;
 static Modal docModal;
@@ -1099,36 +1078,36 @@ static void docHandleAction(int action, AppState &app)
 
     switch (action)
     {
-    case 0: // View Today's Appointments
+    case 0: 
         DoctorMenu::viewTodayAppointments(*app.loggedDoctor, app.appointments,
                                           app.patients, outBuf, 8192);
         docOutput.setText(outBuf);
         break;
-    case 1: // Mark Complete
+    case 1: 
     {
         DoctorMenu::listTodayPending(*app.loggedDoctor, app.appointments,
                                      outBuf, 8192);
         char lbl[1][64];
         safeCpy(lbl[0], "Appointment ID to mark complete", 64);
         docModal.hasPreview = true;
-        safeCpy(docModal.previewBuf, outBuf, 4096);
         docModal.open(1, "Mark Appointment Complete", 1, lbl,
                       (WIN_W - 400.f) / 2.f, (WIN_H - 300.f) / 2.f);
+        safeCpy(docModal.previewBuf, outBuf, 4096);
         break;
     }
-    case 2: // Mark No-Show
+    case 2: 
     {
         DoctorMenu::listTodayPending(*app.loggedDoctor, app.appointments,
                                      outBuf, 8192);
         char lbl[1][64];
         safeCpy(lbl[0], "Appointment ID to mark no-show", 64);
         docModal.hasPreview = true;
-        safeCpy(docModal.previewBuf, outBuf, 4096);
         docModal.open(2, "Mark Appointment No-Show", 1, lbl,
                       (WIN_W - 400.f) / 2.f, (WIN_H - 300.f) / 2.f);
+        safeCpy(docModal.previewBuf, outBuf, 4096);
         break;
     }
-    case 3: // Write Prescription
+    case 3: 
     {
         DoctorMenu::listCompletedWithoutPrescription(
             *app.loggedDoctor, app.appointments, app.prescriptions,
@@ -1138,12 +1117,12 @@ static void docHandleAction(int action, AppState &app)
         safeCpy(lbl[1], "Medicines (e.g. Paracetamol 500mg;...)", 64);
         safeCpy(lbl[2], "Notes", 64);
         docModal.hasPreview = true;
-        safeCpy(docModal.previewBuf, outBuf, 4096);
         docModal.open(3, "Write Prescription", 3, lbl,
                       (WIN_W - 400.f) / 2.f, (WIN_H - 380.f) / 2.f);
+        safeCpy(docModal.previewBuf, outBuf, 4096);
         break;
     }
-    case 4: // View Patient History
+    case 4: 
     {
         char lbl[1][64];
         safeCpy(lbl[0], "Patient ID", 64);
@@ -1271,9 +1250,7 @@ static void drawDoctorMenu(sf::RenderWindow &win, const sf::Font &font,
     drawStatusBar(win, font, app);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ADMIN MENU
-// ─────────────────────────────────────────────────────────────────────────────
+
 static MenuPanel admPanel;
 static OutputPanel admOutput;
 static Modal admModal;
@@ -1285,7 +1262,7 @@ static void admHandleAction(int action, AppState &app)
 
     switch (action)
     {
-    case 0: // Add Doctor
+    case 0: 
     {
         char lbl[5][64];
         safeCpy(lbl[0], "Name", 64);
@@ -1294,22 +1271,21 @@ static void admHandleAction(int action, AppState &app)
         safeCpy(lbl[3], "Password (min 6)", 64);
         safeCpy(lbl[4], "Consultation Fee", 64);
         admModal.hasPreview = false;
-        admModal.open(0, "Add Doctor", 5, lbl,
-                      (WIN_W - 400.f) / 2.f, (WIN_H - 420.f) / 2.f);
+        admModal.open(0, "Add Doctor", 5, lbl, (WIN_W - 400.f) / 2.f, (WIN_H - 420.f) / 2.f);
         break;
     }
-    case 1: // Remove Doctor
+    case 1: 
     {
         AdminMenu::viewAllDoctors(app.doctors, outBuf, 8192);
         char lbl[1][64];
         safeCpy(lbl[0], "Doctor ID to remove", 64);
         admModal.hasPreview = true;
-        safeCpy(admModal.previewBuf, outBuf, 4096);
         admModal.open(1, "Remove Doctor", 1, lbl,
                       (WIN_W - 400.f) / 2.f, (WIN_H - 300.f) / 2.f);
+        safeCpy(admModal.previewBuf, outBuf, 4096);
         break;
     }
-    case 2: // Add Patient
+    case 2: 
     {
         char lbl[6][64];
         safeCpy(lbl[0], "Name", 64);
@@ -1319,19 +1295,18 @@ static void admHandleAction(int action, AppState &app)
         safeCpy(lbl[4], "Password (min 6)", 64);
         safeCpy(lbl[5], "Initial Balance", 64);
         admModal.hasPreview = false;
-        admModal.open(2, "Add Patient", 6, lbl,
-                      (WIN_W - 400.f) / 2.f, (WIN_H - 480.f) / 2.f);
+        admModal.open(2, "Add Patient", 6, lbl, (WIN_W - 400.f) / 2.f, (WIN_H - 480.f) / 2.f);
         break;
     }
-    case 3: // Remove Patient
+    case 3: 
     {
         AdminMenu::viewAllPatients(app.patients, app.bills, outBuf, 8192);
         char lbl[1][64];
         safeCpy(lbl[0], "Patient ID to remove", 64);
         admModal.hasPreview = true;
-        safeCpy(admModal.previewBuf, outBuf, 4096);
         admModal.open(3, "Remove Patient", 1, lbl,
                       (WIN_W - 400.f) / 2.f, (WIN_H - 300.f) / 2.f);
+        safeCpy(admModal.previewBuf, outBuf, 4096);
         break;
     }
     case 4:
@@ -1351,7 +1326,7 @@ static void admHandleAction(int action, AppState &app)
         AdminMenu::viewUnpaidBills(app.bills, app.patients, outBuf, 8192);
         admOutput.setText(outBuf);
         break;
-    case 8: // Discharge Patient
+    case 8: 
     {
         char lbl[1][64];
         safeCpy(lbl[0], "Patient ID to discharge", 64);
@@ -1380,7 +1355,7 @@ static void drawAdminMenu(sf::RenderWindow &win, const sf::Font &font,
     drawRect(win, 0, 0, WIN_W, WIN_H, Colors::BG);
     drawTopBar(win, font);
 
-    // Stats bar
+    
     float sy = 64.f;
     drawRect(win, 16.f, sy, WIN_W - 32.f, 52.f, Colors::PANEL, Colors::BORDER, 1.f);
     auto statAt = [&](const char *lbl, int val, float x, sf::Color col)
@@ -1443,7 +1418,7 @@ static void drawAdminMenu(sf::RenderWindow &win, const sf::Font &font,
             outBuf[0] = '\0';
             bool ok = false;
 
-            if (admModal.action == 0) // Add Doctor                                                                                   
+            if (admModal.action == 0) 
             {
                 AddDoctorInput in;
                 safeCpy(in.name, admModal.fields[0].buf, 51);
@@ -1458,7 +1433,7 @@ static void drawAdminMenu(sf::RenderWindow &win, const sf::Font &font,
                     app.reloadAndRefresh();
                 admModal.close();
             }
-            else if (admModal.action == 1) // Remove Doctor
+            else if (admModal.action == 1) 
             {
                 RemoveDoctorInput in;
                 in.doctorID = Validator::strToInt(admModal.fields[0].buf);
@@ -1469,7 +1444,7 @@ static void drawAdminMenu(sf::RenderWindow &win, const sf::Font &font,
                     app.reloadAndRefresh();
                 admModal.close();
             }
-            else if (admModal.action == 2) // Add Patient
+            else if (admModal.action == 2) 
             {
                 AddPatientInput in;
                 safeCpy(in.name, admModal.fields[0].buf, 51);
@@ -1485,7 +1460,7 @@ static void drawAdminMenu(sf::RenderWindow &win, const sf::Font &font,
                     app.reloadAndRefresh();
                 admModal.close();
             }
-            else if (admModal.action == 3) // Remove Patient
+            else if (admModal.action == 3) 
             {
                 RemovePatientInput in;
                 in.patientID = Validator::strToInt(admModal.fields[0].buf);
@@ -1498,7 +1473,7 @@ static void drawAdminMenu(sf::RenderWindow &win, const sf::Font &font,
                     app.reloadAndRefresh();
                 admModal.close();
             }
-            else if (admModal.action == 8) // Discharge Patient
+            else if (admModal.action == 8) 
             {
                 DischargePatientInput in;
                 in.patientID = Validator::strToInt(admModal.fields[0].buf);
@@ -1515,6 +1490,7 @@ static void drawAdminMenu(sf::RenderWindow &win, const sf::Font &font,
     }
     drawStatusBar(win, font, app);
 }
+
 
 void ui_run(AppState &app)
 {

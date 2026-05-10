@@ -10,7 +10,7 @@ private:
 public:
     Storage() : count(0) {}
 
-    // ── Add ───────────────────────────────────────────────────────────────────
+    
     bool add(const T &item)
     {
         if (count >= 100)
@@ -19,7 +19,7 @@ public:
         return true;
     }
 
-    // remove function through index
+    
     void removeAt(int idx)
     {
         if (idx < 0 || idx >= count)

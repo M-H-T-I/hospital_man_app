@@ -1,6 +1,3 @@
-// =============================================================================
-// Appointment.cpp
-// =============================================================================
 #include "Appointment.hpp"
 #include "Validator.hpp"
 #include <iostream>
@@ -22,9 +19,6 @@ Appointment::Appointment(int appID, int patID, int docID, const char *d, const c
 void Appointment::setStatus(const char *s) { Validator::textCpy(status, s, 12); }
 void Appointment::setDate(const char *d) { Validator::textCpy(date, d, 11); }
 void Appointment::setTimeSlot(const char *t) { Validator::textCpy(timeSlot, t, 6); }
-
-// ── Operator == ───────────────────────────────────────────────────────────────
-// Conflict: same doctor, same date, same time slot, neither is cancelled
 
 bool Appointment::operator==(const Appointment &other) const
 {
@@ -51,9 +45,6 @@ std::ostream &operator<<(std::ostream &os, const Appointment &a)
        << " | Status: " << a.status;
     return os;
 }
-
-// ── CSV ───────────────────────────────────────────────────────────────────────
-// appointment_id,patient_id,doctor_id,date,time_slot,status
 
 void Appointment::toCSV(char *buf, int bufSize) const
 {

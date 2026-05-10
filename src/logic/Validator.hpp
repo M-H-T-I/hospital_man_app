@@ -17,12 +17,12 @@ public:
     static bool isPositiveFloat(const char *s);
     static bool isValidID(const char *s);
     static bool isValidContact(const char *s);  
-    static bool isValidPassword(const char *s); // minimum 6 characters
-    static bool isValidGender(const char *s);   // m or f
-    static bool isValidAge(const char *s);      // positive integer
+    static bool isValidPassword(const char *s); 
+    static bool isValidGender(const char *s);   
+    static bool isValidAge(const char *s);      
     static bool isValidMenuChoice(const char *s, int min, int max);
-    static bool isValidTimeSlot(const char *s);   // one of the 8 fixed slots
-    static bool isValidDate(const char *s);       // dd-mm-yy
+    static bool isValidTimeSlot(const char *s);   
+    static bool isValidDate(const char *s);       
     static bool isValidDateFormat(const char *s); 
 
     static bool strEqCaseInsensitive(const char *a, const char *b);

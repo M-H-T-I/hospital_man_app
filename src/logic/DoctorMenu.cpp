@@ -1,6 +1,3 @@
-// =============================================================================
-// DoctorMenu.cpp  –  SFML-compatible  (no cin / cout / blocking loops)
-// =============================================================================
 #include "DoctorMenu.hpp"
 #include "FileHandler.hpp"
 #include "Validator.hpp"
@@ -8,30 +5,33 @@
 #include <cstdio>
 #include <ctime>
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Internal string helpers
-// ─────────────────────────────────────────────────────────────────────────────
 static void bufCpy(char *dst, const char *src, int max)
 {
     int i = 0;
-    while (i < max - 1 && src[i]) { dst[i] = src[i]; i++; }
+    while (i < max - 1 && src[i])
+    {
+        dst[i] = src[i];
+        i++;
+    }
     dst[i] = '\0';
 }
 static void bufCat(char *dst, const char *src, int max)
 {
-    int i = 0; while (dst[i]) i++;
+    int i = 0;
+    while (dst[i])
+        i++;
     int j = 0;
-    while (i < max - 1 && src[j]) dst[i++] = src[j++];
+    while (i < max - 1 && src[j])
+        dst[i++] = src[j++];
     dst[i] = '\0';
 }
 static void bufCatInt(char *dst, int v, int max)
 {
-    char tmp[24]; Validator::intToStr(v, tmp, 24); bufCat(dst, tmp, max);
+    char tmp[24];
+    Validator::intToStr(v, tmp, 24);
+    bufCat(dst, tmp, max);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Helpers
-// ─────────────────────────────────────────────────────────────────────────────
 void DoctorMenu::getTodayDate(char *buf)
 {
     time_t now = time(0);
@@ -44,9 +44,12 @@ int DoctorMenu::compareDates(const char *d1, const char *d2)
     int day1, mon1, yr1, day2, mon2, yr2;
     Validator::parseDate(d1, day1, mon1, yr1);
     Validator::parseDate(d2, day2, mon2, yr2);
-    if (yr1  != yr2)  return yr1  < yr2  ? -1 : 1;
-    if (mon1 != mon2) return mon1 < mon2 ? -1 : 1;
-    if (day1 != day2) return day1 < day2 ? -1 : 1;
+    if (yr1 != yr2)
+        return yr1 < yr2 ? -1 : 1;
+    if (mon1 != mon2)
+        return mon1 < mon2 ? -1 : 1;
+    if (day1 != day2)
+        return day1 < day2 ? -1 : 1;
     return 0;
 }
 
@@ -56,11 +59,26 @@ void DoctorMenu::sortByTimeSlotAsc(Appointment *arr, int n)
         for (int j = 0; j < n - i - 1; j++)
         {
             const char *t1 = arr[j].getTimeSlot();
-            const char *t2 = arr[j+1].getTimeSlot();
-            int k = 0; bool swap = false;
+            const char *t2 = arr[j + 1].getTimeSlot();
+            int k = 0;
+            bool swap = false;
             while (t1[k] && t2[k])
-            { if (t1[k] > t2[k]) { swap = true; break; } if (t1[k] < t2[k]) break; k++; }
-            if (swap) { Appointment t = arr[j]; arr[j] = arr[j+1]; arr[j+1] = t; }
+            {
+                if (t1[k] > t2[k])
+                {
+                    swap = true;
+                    break;
+                }
+                if (t1[k] < t2[k])
+                    break;
+                k++;
+            }
+            if (swap)
+            {
+                Appointment t = arr[j];
+                arr[j] = arr[j + 1];
+                arr[j + 1] = t;
+            }
         }
 }
 
@@ -68,45 +86,58 @@ void DoctorMenu::sortPrescsByDateDesc(Prescription *arr, int n)
 {
     for (int i = 0; i < n - 1; i++)
         for (int j = 0; j < n - i - 1; j++)
-            if (compareDates(arr[j].getDate(), arr[j+1].getDate()) < 0)
-            { Prescription t = arr[j]; arr[j] = arr[j+1]; arr[j+1] = t; }
+            if (compareDates(arr[j].getDate(), arr[j + 1].getDate()) < 0)
+            {
+                Prescription t = arr[j];
+                arr[j] = arr[j + 1];
+                arr[j + 1] = t;
+            }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// listTodayPending  –  used by UI to populate Mark Complete / No-Show picker
-// ─────────────────────────────────────────────────────────────────────────────
 void DoctorMenu::listTodayPending(const Doctor &doctor,
-                                   const Storage<Appointment> &appointments,
-                                   char *outBuf, int outBufSz)
+                                  const Storage<Appointment> &appointments,
+                                  char *outBuf, int outBufSz)
 {
-    char today[11]; getTodayDate(today);
+    char today[11];
+    getTodayDate(today);
     outBuf[0] = '\0';
-    bool any = false;
-    for (int i = 0; i < appointments.size(); i++)
+
+    Appointment pending[100];
+    int count = 0;
+    for (int i = 0; i < appointments.size() && count < 100; i++)
     {
         const Appointment &ap = appointments.get(i);
         if (ap.getDoctorID() == doctor.getID() &&
             Validator::strEq(ap.getDate(), today) &&
             Validator::strEq(ap.getStatus(), "pending"))
-        {
-            bufCat(outBuf, "ID: ", outBufSz);
-            bufCatInt(outBuf, ap.getAppointmentID(), outBufSz);
-            bufCat(outBuf, "  |  Time: ", outBufSz);
-            bufCat(outBuf, ap.getTimeSlot(), outBufSz);
-            bufCat(outBuf, "\n", outBufSz);
-            any = true;
-        }
+            pending[count++] = ap;
     }
-    if (!any)
+
+    if (count == 0)
+    {
         bufCpy(outBuf, "No pending appointments for today.", outBufSz);
+        return;
+    }
+
+    sortByTimeSlotAsc(pending, count);
+
+    bufCpy(outBuf, "Today's pending appointments:\n", outBufSz);
+    bufCat(outBuf, "Appt ID  |  Time   |  Patient ID\n", outBufSz);
+    bufCat(outBuf, "────────────────────────────────\n", outBufSz);
+    for (int i = 0; i < count; i++)
+    {
+        bufCatInt(outBuf, pending[i].getAppointmentID(), outBufSz);
+        bufCat(outBuf, "        |  ", outBufSz);
+        bufCat(outBuf, pending[i].getTimeSlot(), outBufSz);
+        bufCat(outBuf, "  |  Patient #", outBufSz);
+        bufCatInt(outBuf, pending[i].getPatientID(), outBufSz);
+        bufCat(outBuf, "\n", outBufSz);
+    }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// listCompletedWithoutPrescription  –  used by Write Prescription wizard
-// ─────────────────────────────────────────────────────────────────────────────
 void DoctorMenu::listCompletedWithoutPrescription(
     const Doctor &doctor,
-    const Storage<Appointment>  &appointments,
+    const Storage<Appointment> &appointments,
     const Storage<Prescription> &prescriptions,
     char *outBuf, int outBufSz)
 {
@@ -115,22 +146,32 @@ void DoctorMenu::listCompletedWithoutPrescription(
     for (int i = 0; i < appointments.size(); i++)
     {
         const Appointment &ap = appointments.get(i);
-        if (ap.getDoctorID() != doctor.getID()) continue;
-        if (!Validator::strEq(ap.getStatus(), "completed")) continue;
+        if (ap.getDoctorID() != doctor.getID())
+            continue;
+        if (!Validator::strEq(ap.getStatus(), "completed"))
+            continue;
 
-        // Check no prescription already written
         bool hasPrescription = false;
         for (int j = 0; j < prescriptions.size(); j++)
             if (prescriptions.get(j).getAppointmentID() == ap.getAppointmentID())
-            { hasPrescription = true; break; }
+            {
+                hasPrescription = true;
+                break;
+            }
 
         if (!hasPrescription)
         {
-            bufCat(outBuf, "App ID: ", outBufSz);
+            if (!any)
+            {
+
+                bufCpy(outBuf, "Completed appointments awaiting prescription:\n", outBufSz);
+                bufCat(outBuf, "Appt ID  |  Patient ID  |  Date\n", outBufSz);
+                bufCat(outBuf, "───────────────────────────────────────\n", outBufSz);
+            }
             bufCatInt(outBuf, ap.getAppointmentID(), outBufSz);
-            bufCat(outBuf, "  |  Patient ID: ", outBufSz);
+            bufCat(outBuf, "        |  ", outBufSz);
             bufCatInt(outBuf, ap.getPatientID(), outBufSz);
-            bufCat(outBuf, "  |  Date: ", outBufSz);
+            bufCat(outBuf, "           |  ", outBufSz);
             bufCat(outBuf, ap.getDate(), outBufSz);
             bufCat(outBuf, "\n", outBufSz);
             any = true;
@@ -140,18 +181,17 @@ void DoctorMenu::listCompletedWithoutPrescription(
         bufCpy(outBuf, "No completed appointments awaiting a prescription.", outBufSz);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 1. viewTodayAppointments
-// ─────────────────────────────────────────────────────────────────────────────
 bool DoctorMenu::viewTodayAppointments(const Doctor &doctor,
                                        const Storage<Appointment> &appointments,
-                                       const Storage<Patient>     &patients,
+                                       const Storage<Patient> &patients,
                                        char *outBuf, int outBufSz)
 {
-    char today[11]; getTodayDate(today);
+    char today[11];
+    getTodayDate(today);
     outBuf[0] = '\0';
 
-    Appointment todayApps[100]; int count = 0;
+    Appointment todayApps[100];
+    int count = 0;
     for (int i = 0; i < appointments.size() && count < 100; i++)
     {
         const Appointment &ap = appointments.get(i);
@@ -191,24 +231,22 @@ bool DoctorMenu::viewTodayAppointments(const Doctor &doctor,
     return true;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 2. markComplete
-// ─────────────────────────────────────────────────────────────────────────────
 bool DoctorMenu::markComplete(const Doctor &doctor,
                               Storage<Appointment> &appointments,
                               const MarkAppointmentInput &in,
                               char *outBuf, int outBufSz)
 {
-    char today[11]; getTodayDate(today);
+    char today[11];
+    getTodayDate(today);
     outBuf[0] = '\0';
 
     for (int i = 0; i < appointments.size(); i++)
     {
         Appointment &ap = appointments.get(i);
         if (ap.getAppointmentID() == in.appointmentID &&
-            ap.getDoctorID()      == doctor.getID()   &&
+            ap.getDoctorID() == doctor.getID() &&
             Validator::strEq(ap.getStatus(), "pending") &&
-            Validator::strEq(ap.getDate(),   today))
+            Validator::strEq(ap.getDate(), today))
         {
             ap.setStatus("completed");
             FileHandler::saveAllAppointments(appointments);
@@ -221,32 +259,33 @@ bool DoctorMenu::markComplete(const Doctor &doctor,
     return false;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 3. markNoShow
-// ─────────────────────────────────────────────────────────────────────────────
 bool DoctorMenu::markNoShow(const Doctor &doctor,
                             Storage<Appointment> &appointments,
-                            Storage<Bill>        &bills,
+                            Storage<Bill> &bills,
                             const MarkAppointmentInput &in,
                             char *outBuf, int outBufSz)
 {
-    char today[11]; getTodayDate(today);
+    char today[11];
+    getTodayDate(today);
     outBuf[0] = '\0';
 
     for (int i = 0; i < appointments.size(); i++)
     {
         Appointment &ap = appointments.get(i);
         if (ap.getAppointmentID() == in.appointmentID &&
-            ap.getDoctorID()      == doctor.getID()   &&
+            ap.getDoctorID() == doctor.getID() &&
             Validator::strEq(ap.getStatus(), "pending") &&
-            Validator::strEq(ap.getDate(),   today))
+            Validator::strEq(ap.getDate(), today))
         {
             ap.setStatus("no-show");
             FileHandler::saveAllAppointments(appointments);
 
             for (int b = 0; b < bills.size(); b++)
                 if (bills.get(b).getAppointmentID() == in.appointmentID)
-                { bills.get(b).setStatus("cancelled"); break; }
+                {
+                    bills.get(b).setStatus("cancelled");
+                    break;
+                }
             FileHandler::saveAllBills(bills);
 
             bufCpy(outBuf, "Appointment marked as no-show.", outBufSz);
@@ -258,11 +297,8 @@ bool DoctorMenu::markNoShow(const Doctor &doctor,
     return false;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 4. writePrescription
-// ─────────────────────────────────────────────────────────────────────────────
 bool DoctorMenu::writePrescription(const Doctor &doctor,
-                                   Storage<Appointment>  &appointments,
+                                   Storage<Appointment> &appointments,
                                    Storage<Prescription> &prescriptions,
                                    const WritePrescriptionInput &in,
                                    char *outBuf, int outBufSz)
@@ -275,15 +311,17 @@ bool DoctorMenu::writePrescription(const Doctor &doctor,
         return false;
     }
 
-    // Validate appointment
     Appointment *app = nullptr;
     for (int i = 0; i < appointments.size(); i++)
     {
         Appointment &ap = appointments.get(i);
         if (ap.getAppointmentID() == in.appointmentID &&
-            ap.getDoctorID()      == doctor.getID()   &&
+            ap.getDoctorID() == doctor.getID() &&
             Validator::strEq(ap.getStatus(), "completed"))
-        { app = &ap; break; }
+        {
+            app = &ap;
+            break;
+        }
     }
     if (!app)
     {
@@ -291,7 +329,6 @@ bool DoctorMenu::writePrescription(const Doctor &doctor,
         return false;
     }
 
-    // Duplicate check
     for (int i = 0; i < prescriptions.size(); i++)
         if (prescriptions.get(i).getAppointmentID() == in.appointmentID)
         {
@@ -311,12 +348,7 @@ bool DoctorMenu::writePrescription(const Doctor &doctor,
     return true;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 5. viewPatientHistory
-// ─────────────────────────────────────────────────────────────────────────────
-bool DoctorMenu::viewPatientHistory(const Doctor &doctor,
-                                    const Storage<Patient>      &patients,
-                                    const Storage<Appointment>  &appointments,
+bool DoctorMenu::viewPatientHistory(const Doctor &doctor, const Storage<Patient> &patients, const Storage<Appointment> &appointments,
                                     const Storage<Prescription> &prescriptions,
                                     const ViewPatientHistoryInput &in,
                                     char *outBuf, int outBufSz)
@@ -330,15 +362,17 @@ bool DoctorMenu::viewPatientHistory(const Doctor &doctor,
         return false;
     }
 
-    // Access check: must have at least one completed appointment with this patient
     bool hasCompleted = false;
     for (int i = 0; i < appointments.size(); i++)
     {
         const Appointment &ap = appointments.get(i);
         if (ap.getPatientID() == in.patientID &&
-            ap.getDoctorID()  == doctor.getID() &&
+            ap.getDoctorID() == doctor.getID() &&
             Validator::strEq(ap.getStatus(), "completed"))
-        { hasCompleted = true; break; }
+        {
+            hasCompleted = true;
+            break;
+        }
     }
     if (!hasCompleted)
     {
@@ -346,10 +380,11 @@ bool DoctorMenu::viewPatientHistory(const Doctor &doctor,
         return false;
     }
 
-    Prescription myPrx[100]; int count = 0;
+    Prescription myPrx[100];
+    int count = 0;
     for (int i = 0; i < prescriptions.size() && count < 100; i++)
         if (prescriptions.get(i).getPatientID() == in.patientID &&
-            prescriptions.get(i).getDoctorID()  == doctor.getID())
+            prescriptions.get(i).getDoctorID() == doctor.getID())
             myPrx[count++] = prescriptions.get(i);
 
     if (count == 0)

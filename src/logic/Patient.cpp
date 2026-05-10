@@ -1,6 +1,5 @@
-// =============================================================================
-// Patient.cpp
-// =============================================================================
+
+
 #include "Patient.hpp"
 #include "Validator.hpp"
 #include <iostream>
@@ -21,8 +20,6 @@ void Patient::setGender(const char *g)
 {
     Validator::textCpy(gender, g, 3);
 }
-
-// ── Operator overloads ────────────────────────────────────────────────────────
 
 Patient &Patient::operator+=(float amount)
 {
@@ -54,8 +51,6 @@ std::ostream &operator<<(std::ostream &os, const Patient &p)
     return os;
 }
 
-// ── Pure virtual implementations ──────────────────────────────────────────────
-
 void Patient::displayMenu()
 {
     char balBuf[32];
@@ -78,9 +73,6 @@ void Patient::displayProfile()
 {
     std::cout << *this << "\n";
 }
-
-// ── CSV serialisation ─────────────────────────────────────────────────────────
-// patient_id,name,age,gender,contact,password,balance
 
 void Patient::toCSV(char *buf, int bufSize) const
 {

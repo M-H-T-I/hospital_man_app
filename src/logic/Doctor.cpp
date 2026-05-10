@@ -18,8 +18,6 @@ void Doctor::setSpecialization(const char *s)
     Validator::textCpy(specialization, s, 51);
 }
 
-
-
 void Doctor::toCSV(char *t, int tSize) const
 {
     char idBuf[16], feeBuf[32];
@@ -40,13 +38,6 @@ void Doctor::toCSV(char *t, int tSize) const
     Validator::strCat(t, feeBuf, tSize);
 }
 
-
-
-
-
-
-//Operator overloads
-
 bool Doctor::operator==(const Doctor &other) const
 {
     return id == other.id;
@@ -64,11 +55,10 @@ ostream &operator<<(ostream &os, const Doctor &d)
     return os;
 }
 
-
 void Doctor::displayMenu()
 {
     cout << "\nWelcome, Dr. " << name
-              << " | Specialization: " << specialization << "\n";
+         << " | Specialization: " << specialization << "\n";
     cout << "===============================================\n";
     cout << "1. View Today's Appointments\n";
     cout << "2. Mark Appointment Complete\n";
@@ -83,4 +73,3 @@ void Doctor::displayProfile()
 {
     cout << *this << "\n";
 }
-

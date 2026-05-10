@@ -1,6 +1,6 @@
-// =============================================================================
-// AdminMenu.cpp  –  SFML-compatible  (no cin / cout / blocking loops)
-// =============================================================================
+
+
+
 #include "AdminMenu.hpp"
 #include "FileHandler.hpp"
 #include "Validator.hpp"
@@ -9,9 +9,9 @@
 #include <cstdio>
 #include <ctime>
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Internal string helpers
-// ─────────────────────────────────────────────────────────────────────────────
+
+
+
 static void bufCpy(char *dst, const char *src, int max)
 {
     int i = 0;
@@ -34,9 +34,9 @@ static void bufCatFloat(char *dst, float v, int max)
     char tmp[32]; Validator::floatToStr(v, tmp, 32, 2); bufCat(dst, tmp, max);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Helpers
-// ─────────────────────────────────────────────────────────────────────────────
+
+
+
 void AdminMenu::getTodayDate(char *buf)
 {
     time_t now = time(0);
@@ -74,9 +74,9 @@ bool AdminMenu::isOverdue(const char *dateStr)
     return difftime(now, billTime) > 7.0 * 24.0 * 3600.0;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 1. addDoctor
-// ─────────────────────────────────────────────────────────────────────────────
+
+
+
 bool AdminMenu::addDoctor(Storage<Doctor> &doctors,
                           const AddDoctorInput &in,
                           char *outBuf, int outBufSz)
@@ -111,9 +111,9 @@ bool AdminMenu::addDoctor(Storage<Doctor> &doctors,
     return true;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 2. removeDoctor
-// ─────────────────────────────────────────────────────────────────────────────
+
+
+
 bool AdminMenu::removeDoctor(Storage<Doctor>            &doctors,
                               const Storage<Appointment> &appointments,
                               const RemoveDoctorInput    &in,
@@ -121,7 +121,7 @@ bool AdminMenu::removeDoctor(Storage<Doctor>            &doctors,
 {
     outBuf[0] = '\0';
 
-    // Guard: pending appointments
+    
     for (int i = 0; i < appointments.size(); i++)
         if (appointments.get(i).getDoctorID() == in.doctorID &&
             Validator::strEq(appointments.get(i).getStatus(), "pending"))
@@ -140,9 +140,9 @@ bool AdminMenu::removeDoctor(Storage<Doctor>            &doctors,
     return true;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 3. addPatient
-// ─────────────────────────────────────────────────────────────────────────────
+
+
+
 bool AdminMenu::addPatient(Storage<Patient>      &patients,
                            const AddPatientInput &in,
                            char *outBuf, int outBufSz)
@@ -182,9 +182,9 @@ bool AdminMenu::addPatient(Storage<Patient>      &patients,
     return true;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 4. removePatient
-// ─────────────────────────────────────────────────────────────────────────────
+
+
+
 bool AdminMenu::removePatient(Storage<Patient>      &patients,
                                Storage<Appointment>  &appointments,
                                Storage<Bill>         &bills,
@@ -219,9 +219,9 @@ bool AdminMenu::removePatient(Storage<Patient>      &patients,
     return true;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 5. viewAllPatients
-// ─────────────────────────────────────────────────────────────────────────────
+
+
+
 bool AdminMenu::viewAllPatients(const Storage<Patient> &patients,
                                 const Storage<Bill>    &bills,
                                 char *outBuf, int outBufSz)
@@ -261,9 +261,9 @@ bool AdminMenu::viewAllPatients(const Storage<Patient> &patients,
     return true;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 6. viewAllDoctors
-// ─────────────────────────────────────────────────────────────────────────────
+
+
+
 bool AdminMenu::viewAllDoctors(const Storage<Doctor> &doctors,
                                char *outBuf, int outBufSz)
 {
@@ -292,9 +292,9 @@ bool AdminMenu::viewAllDoctors(const Storage<Doctor> &doctors,
     return true;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 7. viewAllAppointments
-// ─────────────────────────────────────────────────────────────────────────────
+
+
+
 bool AdminMenu::viewAllAppointments(const Storage<Appointment> &appointments,
                                     const Storage<Patient>     &patients,
                                     const Storage<Doctor>      &doctors,
@@ -335,9 +335,9 @@ bool AdminMenu::viewAllAppointments(const Storage<Appointment> &appointments,
     return true;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 8. viewUnpaidBills
-// ─────────────────────────────────────────────────────────────────────────────
+
+
+
 bool AdminMenu::viewUnpaidBills(const Storage<Bill>    &bills,
                                 const Storage<Patient> &patients,
                                 char *outBuf, int outBufSz)
@@ -372,9 +372,9 @@ bool AdminMenu::viewUnpaidBills(const Storage<Bill>    &bills,
     return true;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 9. dischargePatient
-// ─────────────────────────────────────────────────────────────────────────────
+
+
+
 bool AdminMenu::dischargePatient(Storage<Patient>      &patients,
                                   Storage<Appointment>  &appointments,
                                   Storage<Bill>         &bills,
@@ -409,15 +409,15 @@ bool AdminMenu::dischargePatient(Storage<Patient>      &patients,
     return true;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 10. viewSecurityLog
-// ─────────────────────────────────────────────────────────────────────────────
+
+
+
 bool AdminMenu::viewSecurityLog(char *outBuf, int outBufSz)
 {
     outBuf[0] = '\0';
 
-    // FileHandler::displaySecurityLog() originally printed to stdout.
-    // We now read the file directly into outBuf.
+    
+    
     FILE *f = fopen("data/security_log.txt", "r");
     if (!f)
     {
@@ -436,9 +436,9 @@ bool AdminMenu::viewSecurityLog(char *outBuf, int outBufSz)
     return true;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 11. generateDailyReport
-// ─────────────────────────────────────────────────────────────────────────────
+
+
+
 bool AdminMenu::generateDailyReport(const Storage<Appointment> &appointments,
                                     const Storage<Bill>        &bills,
                                     const Storage<Patient>     &patients,

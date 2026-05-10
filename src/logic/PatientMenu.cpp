@@ -8,44 +8,52 @@
 #include <cstring>
 #include <cstdio>
 
-
 static void bufCpy(char *dst, const char *src, int max)
 {
     int i = 0;
-    while (i < max - 1 && src[i]) { dst[i] = src[i]; i++; }
+    while (i < max - 1 && src[i])
+    {
+        dst[i] = src[i];
+        i++;
+    }
     dst[i] = '\0';
 }
 static void bufCat(char *dst, const char *src, int max)
 {
-    int i = 0; while (dst[i]) i++;
+    int i = 0;
+    while (dst[i])
+        i++;
     int j = 0;
-    while (i < max - 1 && src[j]) dst[i++] = src[j++];
+    while (i < max - 1 && src[j])
+        dst[i++] = src[j++];
     dst[i] = '\0';
 }
-// Append a single int as decimal text
+
 static void bufCatInt(char *dst, int v, int max)
 {
-    char tmp[24]; Validator::intToStr(v, tmp, 24);
-    bufCat(dst, tmp, max);
-}
-// Append a float with 2 decimal places
-static void bufCatFloat(char *dst, float v, int max)
-{
-    char tmp[32]; Validator::floatToStr(v, tmp, 32, 2);
+    char tmp[24];
+    Validator::intToStr(v, tmp, 24);
     bufCat(dst, tmp, max);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Sorting helpers
-// ─────────────────────────────────────────────────────────────────────────────
+static void bufCatFloat(char *dst, float v, int max)
+{
+    char tmp[32];
+    Validator::floatToStr(v, tmp, 32, 2);
+    bufCat(dst, tmp, max);
+}
+
 int PatientMenu::compareDates(const char *d1, const char *d2)
 {
     int day1, mon1, yr1, day2, mon2, yr2;
     Validator::parseDate(d1, day1, mon1, yr1);
     Validator::parseDate(d2, day2, mon2, yr2);
-    if (yr1  != yr2)  return yr1  < yr2  ? -1 : 1;
-    if (mon1 != mon2) return mon1 < mon2 ? -1 : 1;
-    if (day1 != day2) return day1 < day2 ? -1 : 1;
+    if (yr1 != yr2)
+        return yr1 < yr2 ? -1 : 1;
+    if (mon1 != mon2)
+        return mon1 < mon2 ? -1 : 1;
+    if (day1 != day2)
+        return day1 < day2 ? -1 : 1;
     return 0;
 }
 
@@ -53,9 +61,11 @@ void PatientMenu::sortAppointmentsByDateAsc(Appointment *arr, int n)
 {
     for (int i = 0; i < n - 1; i++)
         for (int j = 0; j < n - i - 1; j++)
-            if (compareDates(arr[j].getDate(), arr[j+1].getDate()) > 0)
+            if (compareDates(arr[j].getDate(), arr[j + 1].getDate()) > 0)
             {
-                Appointment t = arr[j]; arr[j] = arr[j+1]; arr[j+1] = t;
+                Appointment t = arr[j];
+                arr[j] = arr[j + 1];
+                arr[j + 1] = t;
             }
 }
 
@@ -63,15 +73,14 @@ void PatientMenu::sortPrescriptionsByDateDesc(Prescription *arr, int n)
 {
     for (int i = 0; i < n - 1; i++)
         for (int j = 0; j < n - i - 1; j++)
-            if (compareDates(arr[j].getDate(), arr[j+1].getDate()) < 0)
+            if (compareDates(arr[j].getDate(), arr[j + 1].getDate()) < 0)
             {
-                Prescription t = arr[j]; arr[j] = arr[j+1]; arr[j+1] = t;
+                Prescription t = arr[j];
+                arr[j] = arr[j + 1];
+                arr[j + 1] = t;
             }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// listDoctorsBySpec  –  used by Book Appointment wizard (step 1 preview)
-// ─────────────────────────────────────────────────────────────────────────────
 int PatientMenu::listDoctorsBySpec(const Storage<Doctor> &doctors,
                                    const char *specialization,
                                    char *outBuf, int outBufSz)
@@ -98,16 +107,12 @@ int PatientMenu::listDoctorsBySpec(const Storage<Doctor> &doctors,
     return found;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// listAvailableSlots  –  used by Book Appointment wizard (step 3 preview)
-// ─────────────────────────────────────────────────────────────────────────────
 int PatientMenu::listAvailableSlots(const Storage<Appointment> &appointments,
                                     int doctorID, const char *dateStr,
                                     char *outBuf, int outBufSz)
 {
     static const char *slots[] = {
-        "09:00","10:00","11:00","12:00","13:00","14:00","15:00","16:00"
-    };
+        "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00"};
     outBuf[0] = '\0';
     int freeCount = 0;
     for (int s = 0; s < 8; s++)
@@ -120,7 +125,10 @@ int PatientMenu::listAvailableSlots(const Storage<Appointment> &appointments,
                 Validator::strEq(ap.getDate(), dateStr) &&
                 Validator::strEq(ap.getTimeSlot(), slots[s]) &&
                 !Validator::strEq(ap.getStatus(), "cancelled"))
-            { taken = true; break; }
+            {
+                taken = true;
+                break;
+            }
         }
         if (!taken)
         {
@@ -134,12 +142,7 @@ int PatientMenu::listAvailableSlots(const Storage<Appointment> &appointments,
     return freeCount;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// listPendingAppointments  –  shown in Cancel Appointment wizard
-// ─────────────────────────────────────────────────────────────────────────────
-void PatientMenu::listPendingAppointments(const Patient &patient,
-                                          const Storage<Appointment> &appointments,
-                                          const Storage<Doctor>      &doctors,
+void PatientMenu::listPendingAppointments(const Patient &patient, const Storage<Appointment> &appointments, const Storage<Doctor> &doctors,
                                           char *outBuf, int outBufSz)
 {
     outBuf[0] = '\0';
@@ -167,12 +170,7 @@ void PatientMenu::listPendingAppointments(const Patient &patient,
         bufCat(outBuf, "You have no pending appointments.\n", outBufSz);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// listUnpaidBills  –  shown in Pay Bill wizard
-// ─────────────────────────────────────────────────────────────────────────────
-void PatientMenu::listUnpaidBills(const Patient &patient,
-                                   const Storage<Bill> &bills,
-                                   char *outBuf, int outBufSz)
+void PatientMenu::listUnpaidBills(const Patient &patient, const Storage<Bill> &bills, char *outBuf, int outBufSz)
 {
     outBuf[0] = '\0';
     bool any = false;
@@ -196,27 +194,17 @@ void PatientMenu::listUnpaidBills(const Patient &patient,
         bufCat(outBuf, "No unpaid bills.\n", outBufSz);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 1. bookAppointment
-// ─────────────────────────────────────────────────────────────────────────────
-bool PatientMenu::bookAppointment(Patient &patient,
-                                  Storage<Doctor>      &doctors,
-                                  Storage<Appointment> &appointments,
-                                  Storage<Bill>        &bills,
-                                  Storage<Patient>     &patients,
-                                  const BookAppointmentInput &in,
+bool PatientMenu::bookAppointment(Patient &patient, Storage<Doctor> &doctors, Storage<Appointment> &appointments, Storage<Bill> &bills, Storage<Patient> &patients, const BookAppointmentInput &in,
                                   char *outBuf, int outBufSz)
 {
     outBuf[0] = '\0';
 
-    // Validate date
     if (!Validator::isValidDate(in.date))
     {
         bufCpy(outBuf, "Invalid date. Use DD-MM-YYYY format.", outBufSz);
         return false;
     }
 
-    // Validate doctor
     Doctor *doc = doctors.findByID(in.doctorID);
     if (!doc)
     {
@@ -224,21 +212,18 @@ bool PatientMenu::bookAppointment(Patient &patient,
         return false;
     }
 
-    // Validate specialization match (optional safety check)
     if (!Validator::strEqCaseInsensitive(doc->getSpecialization(), in.specialization))
     {
         bufCpy(outBuf, "Doctor specialization does not match selection.", outBufSz);
         return false;
     }
 
-    // Validate time slot format
     if (!Validator::isValidTimeSlot(in.timeSlot))
     {
         bufCpy(outBuf, "Invalid time slot.", outBufSz);
         return false;
     }
 
-    // Check slot availability
     for (int a = 0; a < appointments.size(); a++)
     {
         const Appointment &ap = appointments.get(a);
@@ -252,7 +237,6 @@ bool PatientMenu::bookAppointment(Patient &patient,
         }
     }
 
-    // Check balance
     if (patient.getBalance() < doc->getFee())
     {
         bufCpy(outBuf, "Insufficient balance. Doctor fee is PKR ", outBufSz);
@@ -261,9 +245,7 @@ bool PatientMenu::bookAppointment(Patient &patient,
         return false;
     }
 
-    // Commit
-    patient -= doc->getFee();
-    int newAppID  = FileHandler::getNextAppointmentID(appointments);
+    int newAppID = FileHandler::getNextAppointmentID(appointments);
     int newBillID = FileHandler::getNextBillID(bills);
 
     Appointment newApp(newAppID, patient.getID(), in.doctorID,
@@ -286,21 +268,18 @@ bool PatientMenu::bookAppointment(Patient &patient,
     bufCat(outBuf, in.date, outBufSz);
     bufCat(outBuf, " at ", outBufSz);
     bufCat(outBuf, in.timeSlot, outBufSz);
-    bufCat(outBuf, "\nFee deducted: PKR ", outBufSz);
+
     bufCatFloat(outBuf, doc->getFee(), outBufSz);
     bufCat(outBuf, "\nNew balance:  PKR ", outBufSz);
     bufCatFloat(outBuf, patient.getBalance(), outBufSz);
     return true;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 2. cancelAppointment
-// ─────────────────────────────────────────────────────────────────────────────
 bool PatientMenu::cancelAppointment(Patient &patient,
                                     Storage<Appointment> &appointments,
-                                    Storage<Bill>        &bills,
-                                    Storage<Doctor>      &doctors,
-                                    Storage<Patient>     &patients,
+                                    Storage<Bill> &bills,
+                                    Storage<Doctor> &doctors,
+                                    Storage<Patient> &patients,
                                     const CancelAppointmentInput &in,
                                     char *outBuf, int outBufSz)
 {
@@ -311,9 +290,12 @@ bool PatientMenu::cancelAppointment(Patient &patient,
     {
         Appointment &ap = appointments.get(i);
         if (ap.getAppointmentID() == in.appointmentID &&
-            ap.getPatientID()     == patient.getID() &&
+            ap.getPatientID() == patient.getID() &&
             Validator::strEq(ap.getStatus(), "pending"))
-        { app = &ap; break; }
+        {
+            app = &ap;
+            break;
+        }
     }
     if (!app)
     {
@@ -332,7 +314,10 @@ bool PatientMenu::cancelAppointment(Patient &patient,
 
     for (int i = 0; i < bills.size(); i++)
         if (bills.get(i).getAppointmentID() == in.appointmentID)
-        { bills.get(i).setStatus("cancelled"); break; }
+        {
+            bills.get(i).setStatus("cancelled");
+            break;
+        }
     FileHandler::saveAllBills(bills);
 
     bufCpy(outBuf, "Appointment cancelled. Refund: PKR ", outBufSz);
@@ -342,12 +327,9 @@ bool PatientMenu::cancelAppointment(Patient &patient,
     return true;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 3. viewMyAppointments
-// ─────────────────────────────────────────────────────────────────────────────
 bool PatientMenu::viewMyAppointments(const Patient &patient,
                                      const Storage<Appointment> &appointments,
-                                     const Storage<Doctor>      &doctors,
+                                     const Storage<Doctor> &doctors,
                                      char *outBuf, int outBufSz)
 {
     outBuf[0] = '\0';
@@ -390,12 +372,9 @@ bool PatientMenu::viewMyAppointments(const Patient &patient,
     return true;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 4. viewMyMedicalRecords
-// ─────────────────────────────────────────────────────────────────────────────
 bool PatientMenu::viewMyMedicalRecords(const Patient &patient,
                                        const Storage<Prescription> &prescriptions,
-                                       const Storage<Doctor>       &doctors,
+                                       const Storage<Doctor> &doctors,
                                        char *outBuf, int outBufSz)
 {
     outBuf[0] = '\0';
@@ -431,9 +410,6 @@ bool PatientMenu::viewMyMedicalRecords(const Patient &patient,
     return true;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 5. viewMyBills
-// ─────────────────────────────────────────────────────────────────────────────
 bool PatientMenu::viewMyBills(const Patient &patient,
                               const Storage<Bill> &bills,
                               char *outBuf, int outBufSz)
@@ -451,7 +427,8 @@ bool PatientMenu::viewMyBills(const Patient &patient,
     for (int i = 0; i < bills.size(); i++)
     {
         const Bill &b = bills.get(i);
-        if (b.getPatientID() != patient.getID()) continue;
+        if (b.getPatientID() != patient.getID())
+            continue;
 
         bufCatInt(outBuf, b.getBillID(), outBufSz);
         bufCat(outBuf, "  |  ", outBufSz);
@@ -482,11 +459,8 @@ bool PatientMenu::viewMyBills(const Patient &patient,
     return true;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 6. payBill
-// ─────────────────────────────────────────────────────────────────────────────
 bool PatientMenu::payBill(Patient &patient,
-                          Storage<Bill>    &bills,
+                          Storage<Bill> &bills,
                           Storage<Patient> &patients,
                           const PayBillInput &in,
                           char *outBuf, int outBufSz)
@@ -497,10 +471,13 @@ bool PatientMenu::payBill(Patient &patient,
     for (int i = 0; i < bills.size(); i++)
     {
         Bill &b = bills.get(i);
-        if (b.getBillID()        == in.billID &&
-            b.getPatientID()     == patient.getID() &&
+        if (b.getBillID() == in.billID &&
+            b.getPatientID() == patient.getID() &&
             Validator::strEq(b.getStatus(), "unpaid"))
-        { bill = &b; break; }
+        {
+            bill = &b;
+            break;
+        }
     }
     if (!bill)
     {
@@ -528,9 +505,6 @@ bool PatientMenu::payBill(Patient &patient,
     return true;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 7. topUpBalance
-// ─────────────────────────────────────────────────────────────────────────────
 bool PatientMenu::topUpBalance(Patient &patient,
                                Storage<Patient> &patients,
                                const TopUpInput &in,

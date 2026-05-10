@@ -1,12 +1,12 @@
 #ifndef ADMINMENU_H
 #define ADMINMENU_H
 
-// =============================================================================
-// AdminMenu.hpp  –  SFML-compatible (no cin / cout)
-//
-// Same contract: every action is stateless, writes human-readable results
-// into outBuf, and returns true (success) / false (error).
-// =============================================================================
+
+
+
+
+
+
 
 #include "Storage.hpp"
 #include "Admin.hpp"
@@ -16,9 +16,9 @@
 #include "Bill.hpp"
 #include "Prescription.hpp"
 
-// ---------------------------------------------------------------------------
-// Input bundles
-// ---------------------------------------------------------------------------
+
+
+
 
 struct AddDoctorInput
 {
@@ -26,7 +26,7 @@ struct AddDoctorInput
     char spec[51]     = {};
     char contact[12]  = {};
     char password[51] = {};
-    char fee[32]      = {};     // positive-float string
+    char fee[32]      = {};     
 };
 
 struct RemoveDoctorInput
@@ -37,11 +37,11 @@ struct RemoveDoctorInput
 struct AddPatientInput
 {
     char name[51]     = {};
-    char age[8]       = {};     // positive-int string
-    char gender[3]    = {};     // "M" or "F"
+    char age[8]       = {};     
+    char gender[3]    = {};     
     char contact[12]  = {};
     char password[51] = {};
-    char balance[32]  = {};     // positive-float string
+    char balance[32]  = {};     
 };
 
 struct RemovePatientInput
@@ -54,9 +54,9 @@ struct DischargePatientInput
     int patientID = 0;
 };
 
-// ---------------------------------------------------------------------------
-// AdminMenu
-// ---------------------------------------------------------------------------
+
+
+
 
 class AdminMenu
 {
@@ -81,7 +81,7 @@ public:
                               const RemovePatientInput &in,
                               char *outBuf, int outBufSz);
 
-    // View methods always return true; outBuf holds the formatted table.
+    
     static bool viewAllPatients(const Storage<Patient> &patients,
                                 const Storage<Bill>    &bills,
                                 char *outBuf, int outBufSz);
@@ -105,10 +105,10 @@ public:
                                  const DischargePatientInput &in,
                                  char *outBuf, int outBufSz);
 
-    // Reads the security log file and writes its contents into outBuf.
+    
     static bool viewSecurityLog(char *outBuf, int outBufSz);
 
-    // Builds the daily report string into outBuf.
+    
     static bool generateDailyReport(const Storage<Appointment> &appointments,
                                     const Storage<Bill>        &bills,
                                     const Storage<Patient>     &patients,
@@ -122,4 +122,4 @@ private:
     static bool isOverdue(const char *dateStr);
 };
 
-#endif // ADMINMENU_H
+#endif 

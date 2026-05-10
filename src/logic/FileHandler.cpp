@@ -1,6 +1,6 @@
-// =============================================================================
-// FileHandler.cpp
-// =============================================================================
+
+
+
 #include "FileHandler.hpp"
 #include "Validator.hpp"
 #include "HospitalException.hpp"
@@ -8,7 +8,7 @@
 #include <ctime>
 #include <iostream>
 
-// ── File paths ────────────────────────────────────────────────────────────────
+
 const char *FileHandler::PATIENTS_FILE = "data/patients.txt";
 const char *FileHandler::DOCTORS_FILE = "data/doctors.txt";
 const char *FileHandler::ADMIN_FILE = "data/admin.txt";
@@ -18,12 +18,12 @@ const char *FileHandler::PRESCRIPTIONS_FILE = "data/prescriptions.txt";
 const char *FileHandler::SECURITY_LOG_FILE = "data/security_log.txt";
 const char *FileHandler::DISCHARGED_FILE = "data/discharged.txt";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// parseLine: splits comma-separated line into fields array.
-// Handles the special case of prescriptions where notes/medicines may
-// not contain commas (per spec format).
-// Returns count of fields found.
-// ─────────────────────────────────────────────────────────────────────────────
+
+
+
+
+
+
 int FileHandler::parseLine(const char *line, char fields[][512], int maxFields)
 {
     int fieldIdx = 0;
@@ -51,15 +51,15 @@ int FileHandler::parseLine(const char *line, char fields[][512], int maxFields)
     return fieldIdx + 1;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// LOAD FUNCTIONS
-// ─────────────────────────────────────────────────────────────────────────────
+
+
+
 
 void FileHandler::loadPatients(Storage<Patient> &store)
 {
     FILE *f = fopen(PATIENTS_FILE, "r");
     if (!f)
-        return; // file may not exist yet on first run
+        return; 
     char line[1024];
     bool firstLine = true;
     while (fgets(line, sizeof(line), f))
@@ -68,7 +68,7 @@ void FileHandler::loadPatients(Storage<Patient> &store)
         {
             firstLine = false;
             continue;
-        } // skip header
+        } 
         Validator::trim(line);
         if (line[0] == '\0')
             continue;
@@ -76,7 +76,7 @@ void FileHandler::loadPatients(Storage<Patient> &store)
         int n = parseLine(line, fields, 8);
         if (n < 7)
             continue;
-        // patient_id,name,age,gender,contact,password,balance
+        
         int id = Validator::strToInt(fields[0]);
         int age = Validator::strToInt(fields[2]);
         float balance = Validator::strToFloat(fields[6]);
@@ -107,7 +107,7 @@ void FileHandler::loadDoctors(Storage<Doctor> &store)
         int n = parseLine(line, fields, 7);
         if (n < 6)
             continue;
-        // doctor_id,name,specialization,contact,password,fee
+        
         int id = Validator::strToInt(fields[0]);
         float fee = Validator::strToFloat(fields[5]);
         Doctor d(id, fields[1], fields[2], fields[3], fields[4], fee);
@@ -137,7 +137,7 @@ bool FileHandler::loadAdmin(Admin &admin)
         int n = parseLine(line, fields, 4);
         if (n < 3)
             continue;
-        // admin_id,name,password
+        
         int id = Validator::strToInt(fields[0]);
         admin = Admin(id, fields[1], fields[2]);
         fclose(f);
@@ -168,7 +168,7 @@ void FileHandler::loadAppointments(Storage<Appointment> &store)
         int n = parseLine(line, fields, 7);
         if (n < 6)
             continue;
-        // appointment_id,patient_id,doctor_id,date,time_slot,status
+        
         int appID = Validator::strToInt(fields[0]);
         int patID = Validator::strToInt(fields[1]);
         int docID = Validator::strToInt(fields[2]);
@@ -199,7 +199,7 @@ void FileHandler::loadBills(Storage<Bill> &store)
         int n = parseLine(line, fields, 7);
         if (n < 6)
             continue;
-        // bill_id,patient_id,appointment_id,amount,status,date
+        
         int billID = Validator::strToInt(fields[0]);
         int patID = Validator::strToInt(fields[1]);
         int appID = Validator::strToInt(fields[2]);
@@ -227,8 +227,8 @@ void FileHandler::loadPrescriptions(Storage<Prescription> &store)
         Validator::trim(line);
         if (line[0] == '\0')
             continue;
-        // prescription_id,appointment_id,patient_id,doctor_id,date,medicines,notes
-        // medicines and notes may contain semicolons but NOT commas per spec
+        
+        
         char fields[8][512];
         int n = parseLine(line, fields, 8);
         if (n < 7)
@@ -243,9 +243,9 @@ void FileHandler::loadPrescriptions(Storage<Prescription> &store)
     fclose(f);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SAVE ALL (rewrites entire file)
-// ─────────────────────────────────────────────────────────────────────────────
+
+
+
 
 void FileHandler::saveAllPatients(const Storage<Patient> &store)
 {
@@ -322,9 +322,9 @@ void FileHandler::saveAllPrescriptions(const Storage<Prescription> &store)
     fclose(f);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// APPEND
-// ─────────────────────────────────────────────────────────────────────────────
+
+
+
 
 void FileHandler::appendPatient(const Patient &p)
 {
@@ -381,9 +381,9 @@ void FileHandler::appendPrescription(const Prescription &p)
     fclose(f);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// UPDATE
-// ─────────────────────────────────────────────────────────────────────────────
+
+
+
 
 void FileHandler::updatePatient(const Patient &p, Storage<Patient> &store)
 {
@@ -424,9 +424,9 @@ void FileHandler::updateBill(const Bill &b, Storage<Bill> &store)
     saveAllBills(store);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// DELETE
-// ─────────────────────────────────────────────────────────────────────────────
+
+
+
 
 void FileHandler::deleteDoctor(int doctorID, Storage<Doctor> &store)
 {
@@ -440,16 +440,16 @@ void FileHandler::deletePatient(int patientID, Storage<Patient> &store)
     saveAllPatients(store);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// CASCADE DELETE
-// ─────────────────────────────────────────────────────────────────────────────
+
+
+
 
 void FileHandler::cascadeDeletePatient(int patientID,
                                        Storage<Appointment> &appointments,
                                        Storage<Bill> &bills,
                                        Storage<Prescription> &prescriptions)
 {
-    // Remove all appointments for this patient
+    
     for (int i = appointments.size() - 1; i >= 0; i--)
     {
         if (appointments.get(i).getPatientID() == patientID)
@@ -459,7 +459,7 @@ void FileHandler::cascadeDeletePatient(int patientID,
     }
     saveAllAppointments(appointments);
 
-    // Remove all bills for this patient
+    
     for (int i = bills.size() - 1; i >= 0; i--)
     {
         if (bills.get(i).getPatientID() == patientID)
@@ -469,7 +469,7 @@ void FileHandler::cascadeDeletePatient(int patientID,
     }
     saveAllBills(bills);
 
-    // Remove all prescriptions for this patient
+    
     for (int i = prescriptions.size() - 1; i >= 0; i--)
     {
         if (prescriptions.get(i).getPatientID() == patientID)
@@ -480,9 +480,9 @@ void FileHandler::cascadeDeletePatient(int patientID,
     saveAllPrescriptions(prescriptions);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// DISCHARGE PATIENT
-// ─────────────────────────────────────────────────────────────────────────────
+
+
+
 
 void FileHandler::dischargePatient(int patientID,
                                    Storage<Patient> &patients,
@@ -490,7 +490,7 @@ void FileHandler::dischargePatient(int patientID,
                                    Storage<Bill> &bills,
                                    Storage<Prescription> &prescriptions)
 {
-    // Find and archive patient record
+    
     Patient *p = patients.findByID(patientID);
     if (!p)
         return;
@@ -504,7 +504,7 @@ void FileHandler::dischargePatient(int patientID,
         fclose(df);
     }
 
-    // Archive all appointments
+    
     FILE *af = fopen(DISCHARGED_FILE, "a");
     if (af)
     {
@@ -520,7 +520,7 @@ void FileHandler::dischargePatient(int patientID,
         fclose(af);
     }
 
-    // Archive all bills
+    
     FILE *bf = fopen(DISCHARGED_FILE, "a");
     if (bf)
     {
@@ -536,7 +536,7 @@ void FileHandler::dischargePatient(int patientID,
         fclose(bf);
     }
 
-    // Archive all prescriptions
+    
     FILE *pf = fopen(DISCHARGED_FILE, "a");
     if (pf)
     {
@@ -552,14 +552,14 @@ void FileHandler::dischargePatient(int patientID,
         fclose(pf);
     }
 
-    // Now cascade delete from live files
+    
     deletePatient(patientID, patients);
     cascadeDeletePatient(patientID, appointments, bills, prescriptions);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SECURITY LOG
-// ─────────────────────────────────────────────────────────────────────────────
+
+
+
 
 void FileHandler::logSecurityEvent(const char *role,
                                    const char *enteredID,
@@ -588,13 +588,13 @@ void FileHandler::displaySecurityLog()
     }
     char line[256];
     bool hasContent = false;
-    // Skip header if present (first line check)
+    
     while (fgets(line, sizeof(line), f))
     {
         Validator::trim(line);
         if (line[0] == '\0')
             continue;
-        // skip header line
+        
         if (Validator::strEq(line, "timestamp,role,entered_id,result"))
             continue;
         std::cout << line << "\n";
@@ -605,9 +605,9 @@ void FileHandler::displaySecurityLog()
     fclose(f);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ID GENERATORS
-// ─────────────────────────────────────────────────────────────────────────────
+
+
+
 
 int FileHandler::getNextPatientID(const Storage<Patient> &store)
 {
